@@ -186,16 +186,16 @@ const sheetStyle = computed(() => ({
                         <template v-else>
                             <dl class="pstats">
                                 <div>
-                                    <dt>{{ user.games }}</dt>
-                                    <dd>{{ $t('islands.inCollection') }}</dd>
+                                    <dt>{{ user.votesUp }}</dt>
+                                    <dd>{{ $t('islands.votes') }}</dd>
                                 </div>
                                 <div>
-                                    <dt>{{ user.hours }}</dt>
-                                    <dd>{{ $t('islands.hours') }}</dd>
+                                    <dt>{{ user.profileViews }}</dt>
+                                    <dd>{{ $t('islands.views') }}</dd>
                                 </div>
                                 <div>
-                                    <dt>{{ user.friends }}</dt>
-                                    <dd>{{ $t('islands.friends') }}</dd>
+                                    <dt>{{ user.role }}</dt>
+                                    <dd>{{ $t('islands.role') }}</dd>
                                 </div>
                             </dl>
 

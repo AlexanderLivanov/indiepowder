@@ -103,7 +103,17 @@ function surprise() {
     background: var(--bg);
     border-right: 1px solid var(--border);
     overflow-y: auto;
-    scrollbar-width: thin;
+    scrollbar-width: none;
+        /* Firefox */
+        -ms-overflow-style: none;
+    
+        /* IE и Edge */
+        &::-webkit-scrollbar {
+            display: none;
+        }
+    
+        /* Chrome, Safari, Opera */
+        overflow: auto;
 }
 
 .sb__brand {

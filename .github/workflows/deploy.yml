@@ -1,0 +1,76 @@
+name: Deploy to production
+
+# запускается при пуше в main — или вручную кнопкой в GitHub
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: production
+  cancel-in-progress: true
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Установка зависимостей
+        run: npm ci || npm install
+
+      - name: Сборка
+        run: npm run build
+
+      # ── миграции БД: только если они вообще есть и база подключена ──
+      - name: Применить миграции на проде
+        if: ${{ secrets.DATABASE_URL != '' }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        run: |
+          if ls drizzle/*.sql >/dev/null 2>&1; then
+            npm run db:migrate
+          else
+            echo "Миграций пока нет — пропускаю"
+          fi
+
+      # ── заливаем только собранное, без node_modules ──
+      - name: Копирование на сервер
+        uses: appleboy/scp-action@v0.1.7
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          source: ".output/**"
+          target: "/var/www/dustore-v3-next"
+          strip_components: 0
+          rm: true
+
+      - name: Перезапуск приложения
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.SSH_HOST }}
+          username: ${{ secrets.SSH_USER }}
+          key: ${{ secrets.SSH_KEY }}
+          script: |
+            set -e
+            # атомарная подмена: собранное готово -> просто меняем папку
+            rm -rf /var/www/dustore-v3-prev
+            [ -d /var/www/dustore-v3 ] && mv /var/www/dustore-v3 /var/www/dustore-v3-prev
+            mv /var/www/dustore-v3-next /var/www/dustore-v3
+            sudo systemctl restart dustore-v3
+            sleep 3
+            # проверка, что поднялось; если нет — откат
+            if ! curl -fsS http://127.0.0.1:3000/ > /dev/null; then
+              echo "Приложение не отвечает — откатываюсь"
+              rm -rf /var/www/dustore-v3
+              mv /var/www/dustore-v3-prev /var/www/dustore-v3
+              sudo systemctl restart dustore-v3
+              exit 1
+            fi
+            echo "Деплой успешен"

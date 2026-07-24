@@ -5,10 +5,21 @@ export function useAuth() {
   const user = useState<SessionUser | null>("auth:user", () => null);
   const pending = useState("auth:pending", () => false);
 
-  /** подтягиваем сессию с сервера (вызывается плагином при старте) */
+  /**
+   * Спрашивает у сервера, кто вошёл.
+   *
+   * ⚠️ ЗДЕСЬ БЫЛ БАГ: обычный $fetch во время отрисовки на сервере
+   * НЕ передаёт cookie браузера. Сервер спрашивал «кто вошёл?» без
+   * cookie сессии, получал null — и после каждой перезагрузки страницы
+   * пользователь выглядел разлогиненным.
+   *
+   * useRequestFetch() пробрасывает заголовки исходного запроса
+   * (включая Cookie), поэтому сессия видна и при серверной отрисовке.
+   */
   async function fetchUser() {
     try {
-      const r = await $fetch<{ user: SessionUser | null }>("/api/auth/me");
+      const request = useRequestFetch();
+      const r = await request<{ user: SessionUser | null }>("/api/auth/me");
       user.value = r.user;
     } catch {
       user.value = null;
@@ -25,7 +36,10 @@ export function useAuth() {
       user.value = r.user;
       return { ok: true as const };
     } catch (e: any) {
-      return { ok: false as const, code: e?.statusMessage || "ERROR" };
+      return {
+        ok: false as const,
+        code: e?.statusMessage || e?.data?.statusMessage || "ERROR",
+      };
     } finally {
       pending.value = false;
     }
@@ -41,7 +55,10 @@ export function useAuth() {
       user.value = r.user;
       return { ok: true as const };
     } catch (e: any) {
-      return { ok: false as const, code: e?.statusMessage || "ERROR" };
+      return {
+        ok: false as const,
+        code: e?.statusMessage || e?.data?.statusMessage || "ERROR",
+      };
     } finally {
       pending.value = false;
     }
@@ -53,5 +70,14 @@ export function useAuth() {
     await navigateTo("/");
   }
 
-  return { user, pending, fetchUser, login, register, logout };
+  async function saveProfile(patch: Record<string, string>) {
+    const r = await $fetch<{ user: SessionUser }>("/api/profile", {
+      method: "PATCH",
+      body: patch,
+    });
+    user.value = r.user;
+    return r.user;
+  }
+
+  return { user, pending, fetchUser, login, register, logout, saveProfile };
 }

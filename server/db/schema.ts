@@ -3,87 +3,92 @@ import {
   varchar,
   int,
   bigint,
-  boolean,
-  timestamp,
   text,
+  datetime,
   index,
 } from "drizzle-orm/mysql-core";
+import { sql } from "drizzle-orm";
 
-/* ═══════════════════════════════════════════════════════════
-   СТРАТЕГИЯ ПЕРЕЕЗДА: две таблицы рядом.
+/**
+ * Схема базы `dustore` — ОДНА база на старый и новый сайт.
+ *
+ * Таблица `users` уже существует и используется старым PHP-сайтом.
+ * Мы читаем и пишем в неё же, поэтому вход общий: зарегистрировался
+ * на v3 — можешь войти на старом сайте, и наоборот.
+ *
+ * ⚠️ ПРАВИЛА РАБОТЫ С ОБЩЕЙ ТАБЛИЦЕЙ:
+ *   • колонки только ДОБАВЛЯЕМ, и только nullable
+ *   • ничего не переименовываем и не удаляем — сломается старый сайт
+ *   • типы не меняем
+ * Всё новое, что нужно только v3, выносим в отдельные таблицы.
+ */
 
-   `users`      — СТАРАЯ таблица Dustore v2. НЕ ТРОГАЕМ, только читаем.
-   `dust_users` — новая. Сюда попадают новые регистрации,
-                  а старые аккаунты переезжают лениво: при первом
-                  успешном входе. Пользователь ничего не замечает.
+export const users = mysqlTable("users", {
+  id: int("id").autoincrement().primaryKey(),
 
-   Так мы не делаем рискованный разовый перенос всей базы
-   и в любой момент можем откатиться на старый сайт.
-   ═══════════════════════════════════════════════════════════ */
-
-/** СТАРАЯ таблица. Описание должно совпадать с боевой схемой 1:1. */
-export const legacyUsers = mysqlTable("users", {
-  id: int("id").primaryKey(), // signed INT — как есть в v2
-  login: varchar("login", { length: 190 }),
+  // ── вход ──
+  username: varchar("username", { length: 190 }),
   email: varchar("email", { length: 190 }),
-  password: varchar("password", { length: 255 }), // хеш от PHP password_hash()
-  telegramId: varchar("telegram_id", { length: 64 }), // VARCHAR в v2
-  role: int("role"), // -1 root, 3 модератор
-  avatar: varchar("avatar", { length: 512 }),
-  createdAt: timestamp("created_at"),
-  // сюда допишем реальные колонки после drizzle-kit pull
+  password: varchar("password", { length: 255 }), // bcrypt, префикс $2y$ от PHP
+  passphrase: varchar("passphrase", { length: 255 }),
+  emailVerified: int("email_verified"),
+  verificationToken: varchar("verification_token", { length: 255 }),
+
+  // ── профиль ──
+  firstName: varchar("first_name", { length: 190 }),
+  lastName: varchar("last_name", { length: 190 }),
+  profilePicture: varchar("profile_picture", { length: 512 }),
+  country: varchar("country", { length: 190 }),
+  city: varchar("city", { length: 190 }),
+  vk: varchar("vk", { length: 512 }),
+  website: varchar("website", { length: 512 }),
+
+  // ── роли ──
+  globalRole: int("global_role"), // -1 root, 3 модератор
+  localRole: varchar("local_role", { length: 190 }),
+  role: varchar("role", { length: 64 }),
+
+  // ── telegram ──
+  telegramId: bigint("telegram_id", { mode: "number" }),
+  telegramToken: text("telegram_token"),
+  telegramUsername: varchar("telegram_username", { length: 190 }),
+  authDate: bigint("auth_date", { mode: "number" }),
+
+  // ── L4T ──
+  l4tRole: varchar("l4t_role", { length: 255 }),
+  l4tExp: text("l4t_exp"),
+  l4tFiles: text("l4t_files"),
+  l4tProjects: text("l4t_projects"),
+  l4tAbout: text("l4t_about"),
+
+  // ── счётчики ──
+  votesUp: int("votes_up"),
+  votesDown: int("votes_down"),
+  profileViews: int("profile_views"),
+
+  // ── даты ──
+  added: datetime("added"),
+  updated: datetime("updated"),
+  lastActivity: datetime("last_activity"),
 });
 
-/** НОВАЯ таблица — единый профиль DustID */
-export const dustUsers = mysqlTable(
-  "dust_users",
+/**
+ * НОВАЯ таблица только для v3: вход через сервисы.
+ * Старый сайт о ней не знает — создавать безопасно.
+ */
+export const userIdentities = mysqlTable(
+  "user_identities",
   {
     id: bigint("id", { mode: "number", unsigned: true })
       .autoincrement()
       .primaryKey(),
-
-    // кто это
-    nick: varchar("nick", { length: 32 }).notNull().unique(),
-    email: varchar("email", { length: 190 }).notNull().unique(),
-    passwordHash: varchar("password_hash", { length: 255 }), // null, если вход только через сервис
-
-    // связь со старым аккаунтом
-    legacyId: int("legacy_id"), // id из users, если переехал
-    migratedAt: timestamp("migrated_at"),
-
-    // профиль
-    displayName: varchar("display_name", { length: 64 }),
-    avatarUrl: varchar("avatar_url", { length: 512 }),
-    bio: text("bio"),
-    role: varchar("role", { length: 16 }).default("user").notNull(), // user | moder | root
-    verified: boolean("verified").default(false).notNull(),
-
-    // подписки — управляются из профиля
-    newsletter: boolean("newsletter").default(false).notNull(),
-    pushEnabled: boolean("push_enabled").default(false).notNull(),
-
-    emailVerified: boolean("email_verified").default(false).notNull(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    lastSeenAt: timestamp("last_seen_at"),
-  },
-  (t) => ({
-    emailIdx: index("idx_dust_users_email").on(t.email),
-    legacyIdx: index("idx_dust_users_legacy").on(t.legacyId),
-  }),
-);
-
-/** привязка входа через сервисы (Яндекс, VK, Telegram…) */
-export const dustIdentities = mysqlTable(
-  "dust_identities",
-  {
-    id: bigint("id", { mode: "number", unsigned: true })
-      .autoincrement()
-      .primaryKey(),
-    userId: bigint("user_id", { mode: "number", unsigned: true }).notNull(),
-    provider: varchar("provider", { length: 32 }).notNull(), // yandex | vk | telegram …
+    userId: int("user_id").notNull(),
+    provider: varchar("provider", { length: 32 }).notNull(),
     providerUid: varchar("provider_uid", { length: 190 }).notNull(),
     email: varchar("email", { length: 190 }),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
+    createdAt: datetime("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
   },
   (t) => ({
     provIdx: index("idx_identity_provider").on(t.provider, t.providerUid),
@@ -91,5 +96,12 @@ export const dustIdentities = mysqlTable(
   }),
 );
 
-export type DustUser = typeof dustUsers.$inferSelect;
-export type NewDustUser = typeof dustUsers.$inferInsert;
+export type User = typeof users.$inferSelect;
+export type NewUser = typeof users.$inferInsert;
+
+/** старая числовая роль → понятная строка */
+export function roleName(globalRole: number | null): string {
+  if (globalRole === -1) return "root";
+  if (globalRole === 3) return "moder";
+  return "user";
+}

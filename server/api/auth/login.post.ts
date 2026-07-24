@@ -12,23 +12,16 @@ export default defineEventHandler(async (event) => {
   }
 
   const store = useStore();
-
-  // 1. ищем в новой таблице
-  let user = await store.findByEmail(email);
-
-  // 2. TODO: если не нашли — ищем в старой `users` и переносим лениво:
-  //    const legacy = await findLegacyByEmail(email)
-  //    if (legacy && await verifyPassword(password, legacy.password)) {
-  //      user = await store.create({ nick: legacy.login, email, password, legacyId: legacy.id })
-  //    }
-
+  const user = await store.findByEmail(email);
   if (!user)
     throw createError({ statusCode: 401, statusMessage: "NO_SUCH_USER" });
 
-  const ok = await store.checkPassword(user as any, password);
+  const ok = await store.checkPassword(user, password);
   if (!ok)
     throw createError({ statusCode: 401, statusMessage: "BAD_PASSWORD" });
 
   await setUserSession(event, user.id);
+  await store.touchActivity(user.id);
+
   return { user: publicUser(user) };
 });

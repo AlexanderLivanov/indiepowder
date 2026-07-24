@@ -43,14 +43,35 @@ if ss -ltn 2>/dev/null | grep -q ":$PORT "; then
   die "порт $PORT занят"
 fi
 
-say "1/8 Node 22"
+say "1/9 Память и swap"
+TOTAL_MB=$(free -m | awk '/^Mem:/{print $2}')
+SWAP_MB=$(free -m | awk '/^Swap:/{print $2}')
+echo "  RAM: ${TOTAL_MB} МБ, swap: ${SWAP_MB} МБ"
+
+# сборка Nuxt съедает ~1.5 ГБ. Без запаса процесс убивает OOM killer
+if [ $((TOTAL_MB + SWAP_MB)) -lt 2500 ]; then
+  echo "  мало памяти для сборки — добавляю swap 2 ГБ"
+  if [ ! -f /swapfile ]; then
+    sudo fallocate -l 2G /swapfile || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+    sudo chmod 600 /swapfile
+    sudo mkswap /swapfile > /dev/null
+    sudo swapon /swapfile
+    grep -q '/swapfile' /etc/fstab || echo '/swapfile none swap sw 0 0' | sudo tee -a /etc/fstab > /dev/null
+    echo "  swap подключён: $(free -m | awk '/^Swap:/{print $2}') МБ"
+  else
+    sudo swapon /swapfile 2>/dev/null || true
+    echo "  /swapfile уже есть"
+  fi
+fi
+
+say "2/9 Node 22"
 if ! command -v node >/dev/null 2>&1 || [ "$(node -v | cut -d. -f1 | tr -d v)" -lt 22 ]; then
   curl -fsSL https://deb.nodesource.com/setup_22.x | sudo -E bash -
   sudo apt-get install -y nodejs
 fi
 node -v
 
-say "2/8 Забираю код"
+say "3/9 Забираю код"
 sudo mkdir -p "$APP_DIR"
 sudo chown -R "$USER":"$USER" "$APP_DIR"
 if [ -d "$APP_DIR/.git" ]; then
@@ -59,7 +80,7 @@ else
   git clone "$REPO" "$APP_DIR"
 fi
 
-say "3/8 Секреты"
+say "4/9 Секреты"
 sudo mkdir -p "$ENV_DIR"
 if [ ! -f "$ENV_DIR/env" ]; then
   SECRET=$(head -c 32 /dev/urandom | base64 | tr -d '\n=/+' | head -c 44)
@@ -80,20 +101,24 @@ else
 fi
 grep -q 'ПАРОЛЬ' "$ENV_DIR/env" 2>/dev/null && die "в $ENV_DIR/env остался шаблон — впиши реальные данные"
 
-say "4/8 Сборка"
+say "5/9 Сборка"
 cd "$APP_DIR"
 set -a; . "$ENV_DIR/env"; set +a
 npm ci || npm install
-npm run build
 
-say "5/8 Миграции"
+# ограничиваем аппетит сборщика, чтобы не поймать OOM
+NODE_OPTIONS="--max-old-space-size=2048" npm run build \
+  || die "сборка упала. Если написано Killed — не хватило памяти:
+     собери локально и залей .output, либо настрой деплой через GitHub Actions" 
+
+say "6/9 Миграции"
 if ls drizzle/*.sql >/dev/null 2>&1; then
   node scripts/migrate-verbose.mjs || die "миграции не прошли — смотри ошибку выше"
 else
   echo "  миграций нет, пропускаю"
 fi
 
-say "6/8 Автозапуск"
+say "7/9 Автозапуск"
 sudo tee /etc/systemd/system/$SERVICE.service > /dev/null <<EOF
 [Unit]
 Description=Dustore v3 (Nuxt/Nitro)
@@ -118,7 +143,7 @@ sudo systemctl is-active --quiet $SERVICE || { sudo journalctl -u $SERVICE -n 30
 curl -fsS "http://127.0.0.1:$PORT/" > /dev/null || die "приложение не отвечает на порту $PORT"
 echo "  приложение живо"
 
-say "7/8 Apache"
+say "8/9 Apache"
 sudo a2enmod proxy proxy_http proxy_wstunnel rewrite headers > /dev/null 2>&1 || true
 VHOST=/etc/apache2/sites-available/$DOMAIN.conf
 if [ ! -f "$VHOST" ]; then
@@ -144,7 +169,7 @@ sudo apache2ctl configtest || die "ошибка в конфиге Apache — с�
 sudo systemctl reload apache2
 echo "  vhost включён, конфиг проверен"
 
-say "8/8 Проверка"
+say "9/9 Проверка"
 echo -n "  новый сайт:  "; curl -s -o /dev/null -w "%{http_code}\n" -H "Host: $DOMAIN" http://127.0.0.1/
 echo -n "  старый сайт: "; curl -s -o /dev/null -w "%{http_code}\n" http://dustore.ru/ || echo "(проверь вручную)"
 

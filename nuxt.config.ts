@@ -6,6 +6,10 @@ export default defineNuxtConfig({
 
   css: ["~/assets/css/main.css"],
 
+  // карты кода нужны только при отладке — в проде это лишние мегабайты
+  // и заметный расход памяти при сборке
+  sourcemap: { server: false, client: false },
+
   // секреты только на сервере; NUXT_SESSION_SECRET из .env перекрывает значение
   runtimeConfig: {
     sessionSecret: "",
@@ -13,8 +17,11 @@ export default defineNuxtConfig({
 
   // ── режим рендеринга по маршрутам ─────────────────────────────
   // публичные страницы отдаются с сервера (SEO), личный кабинет — обычной SPA
+  // ⚠️ prerender НЕ используем: он поднимает сервер прямо во время сборки
+  // и на слабой машине съедает всю память (сборка падает с «Killed»).
+  // swr даёт тот же эффект — страница кешируется, но уже в рантайме.
   routeRules: {
-    "/": { prerender: true },
+    "/": { swr: 3600 },
     "/games/**": { swr: 3600 },
     "/login": { ssr: true },
     "/console/**": { ssr: false },

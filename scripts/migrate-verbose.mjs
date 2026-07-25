@@ -7,7 +7,17 @@
  */
 import { readFileSync, readdirSync, existsSync } from 'node:fs'
 import process from 'node:process'
-import mysql from 'mysql2/promise'
+import { createRequire } from 'node:module'
+
+// mysql2 может лежать либо в обычных node_modules (локально),
+// либо внутри собранного .output/server (на проде после деплоя).
+const require = createRequire(import.meta.url)
+let mysql
+try {
+  mysql = require('mysql2/promise')
+} catch {
+  mysql = require(new URL('../.output/server/node_modules/mysql2/promise.js', import.meta.url).pathname)
+}
 
 // читаем .env руками, без зависимостей
 if (existsSync('.env')) {

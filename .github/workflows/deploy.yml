@@ -13,9 +13,6 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
-    env:
-      # секреты доступны в if: только через env, напрямую нельзя
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -30,16 +27,6 @@ jobs:
       - name: Сборка
         run: npm run build
 
-      # ── миграции БД: только если они вообще есть и база подключена ──
-      - name: Применить миграции на проде
-        if: env.DATABASE_URL != ''
-        run: |
-          if ls drizzle/*.sql >/dev/null 2>&1; then
-            npm run db:migrate
-          else
-            echo "Миграций пока нет — пропускаю"
-          fi
-
       # ── заливаем только собранное, без node_modules ──
       - name: Копирование на сервер
         uses: appleboy/scp-action@v0.1.7
@@ -47,7 +34,7 @@ jobs:
           host: ${{ secrets.SSH_HOST }}
           username: ${{ secrets.SSH_USER }}
           key: ${{ secrets.SSH_KEY }}
-          source: ".output/**"
+          source: ".output/**,drizzle/**,scripts/migrate-verbose.mjs,package.json,drizzle.config.ts"
           target: "/var/www/dustore-v3-next"
           strip_components: 0
           rm: true
@@ -64,6 +51,15 @@ jobs:
             rm -rf /var/www/dustore-v3-prev
             [ -d /var/www/dustore-v3 ] && mv /var/www/dustore-v3 /var/www/dustore-v3-prev
             mv /var/www/dustore-v3-next /var/www/dustore-v3
+
+            # миграции применяем ЗДЕСЬ, на сервере — база доступна как localhost.
+            # DATABASE_URL берём из файла секретов сервера.
+            cd /var/www/dustore-v3
+            set -a; . /etc/dustore-v3/env; set +a
+            if ls drizzle/*.sql >/dev/null 2>&1 && [ -n "$DATABASE_URL" ]; then
+              node scripts/migrate-verbose.mjs || { echo "Миграции упали"; exit 1; }
+            fi
+
             sudo systemctl restart dustore-v3
             sleep 3
             # проверка, что поднялось; если нет — откат

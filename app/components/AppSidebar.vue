@@ -41,10 +41,6 @@ function surprise() {
 
 <template>
     <aside class="sb">
-        <NuxtLink :to="localePath('/')" class="sb__brand">
-            <span class="sb__mark" />dustore
-        </NuxtLink>
-
         <nav class="sb__nav">
             <NuxtLink v-for="i in main" :key="i.key" :to="localePath(i.to)" class="it" :class="{ 'is-on': isOn(i.to) }">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
@@ -61,6 +57,22 @@ function surprise() {
                     <path :d="i.icon" />
                 </svg>
                 {{ $t(`sb.${i.key}`) }}
+            </NuxtLink>
+
+            <p class="sb__cap">{{ $t('sb.forDevs') }}</p>
+            <NuxtLink :to="localePath('/devs')" class="it it--devs">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M16 18l6-6-6-6M8 6l-6 6 6 6" />
+                </svg>
+                {{ $t('sb.devsLanding') }}
+            </NuxtLink>
+            <NuxtLink :to="localePath('/console')" class="it it--devs">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M4 4h16v12H4zM2 20h20M9 9l2 2-2 2M13 13h3" />
+                </svg>
+                {{ $t('sb.console') }}
             </NuxtLink>
 
             <p class="sb__cap">{{ $t('sb.collections') }}</p>
@@ -94,27 +106,28 @@ function surprise() {
 <style scoped>
 .sb {
     position: sticky;
-    top: 0;
-    height: 100dvh;
+    top: 14px;
+    height: calc(100dvh - 28px);
     display: flex;
     flex-direction: column;
-    gap: 14px;
-    padding: 18px 14px;
-    background: var(--bg);
-    border-right: 1px solid var(--border);
+    gap: 12px;
+    margin: 14px 0 14px 14px;
+    padding: 16px 12px;
+    /* островок: светлее фона, скруглён со всех сторон, со свечением */
+    background: linear-gradient(180deg, rgba(52, 16, 68, .96), rgba(40, 11, 54, .96));
+    border: 1px solid rgba(195, 33, 120, .22);
+    border-radius: 20px;
+    box-shadow:
+        0 10px 34px -8px rgba(0, 0, 0, .5),
+        0 1px 0 rgba(255, 255, 255, .05) inset;
+    backdrop-filter: blur(14px) saturate(140%);
     overflow-y: auto;
-    scrollbar-width: none;
-        /* Firefox */
-        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
     
-        /* IE и Edge */
-        &::-webkit-scrollbar {
-            display: none;
-        }
-    
-        /* Chrome, Safari, Opera */
-        overflow: auto;
-}
+    .sb::-webkit-scrollbar {
+        display: none;
+    }
 
 .sb__brand {
     display: flex;
@@ -181,6 +194,14 @@ function surprise() {
 
 .it--add {
     color: var(--muted);
+}
+
+.it--devs svg {
+    color: var(--violet);
+}
+
+.it--devs:hover svg {
+    color: var(--p);
 }
 
 .sb__cap {

@@ -345,10 +345,16 @@
     "surprise": "Surprise me",
     "surpriseText": "We'll pick a random game just for you",
     "tryIt": "Try it",
-    "continue": "Continue"
+    "continue": "Continue",
+    "forDevs": "for developers",
+    "devsLanding": "Platform",
+    "console": "Console"
   },
   "tb": {
-    "search": "Search games, genres or developers…"
+    "search": "Search games, genres or developers…",
+    "theme": "Theme",
+    "lang": "Language",
+    "dusty": "Dusty — assistant"
   },
   "ai": {
     "title": "What do you feel like playing?",
@@ -407,5 +413,70 @@
     "qrTitle": "Your profile",
     "copyLink": "link",
     "linkCopied": "Link copied"
+  },
+  "devs": {
+    "metaTitle": "For developers",
+    "metaDesc": "Publish indie games on Dustore: 0% fee for jam-born games, fair discovery, expert reviews.",
+    "kicker": "the indie platform",
+    "title": "Publish games where they get found",
+    "lead": "Dustore is built by developers for developers. Upload a build in a minute, get fair discovery instead of a budget race, and 0% commission on games born at our jams.",
+    "toConsole": "Developer console",
+    "howItWorks": "How it works",
+    "featsTitle": "What developers get",
+    "feat": {
+      "commission": {
+        "t": "0% commission",
+        "d": "For games born at Dustore jams we take nothing. For everything else — a fair 10%, no hidden fees."
+      },
+      "upload": {
+        "t": "Publish in a minute",
+        "d": "Drop a build — zip, apk, exe, HTML5 or wasm. Fill in profile, studio and details while the file uploads."
+      },
+      "recommend": {
+        "t": "Fair discovery",
+        "d": "The recommendation system gives new and overlooked games a chance, not just those with a bigger promo budget."
+      },
+      "expert": {
+        "t": "Expert reviews",
+        "d": "'Bityi Piksel' — a breakdown by experienced developers: honest game-design feedback, not just stars."
+      },
+      "reviews": {
+        "t": "Player reviews",
+        "d": "Ratings from people who actually played. Play-to-vote: a vote counts only after real time in the game."
+      },
+      "bugs": {
+        "t": "Bug reports",
+        "d": "Players report bugs right on the game page. Structured and sent to you, not lost in the comments."
+      }
+    },
+    "commKicker": "commission",
+    "commTitle": "You decide what you pay",
+    "commText": "Games from our jams are published with 0% commission — forever. For everyone else the rate is fair and transparent.",
+    "commJam": "Game was born at a Dustore jam",
+    "commPrice": "Game price",
+    "commRate": "commission",
+    "commYouGet": "you get",
+    "commZeroNote": "✓ 0% — a Dustore jam game. You keep the full amount.",
+    "howTitle": "How to upload a game",
+    "step": {
+      "signup": {
+        "t": "Create an account",
+        "d": "Same login as the main site. Already have one? Just sign in."
+      },
+      "studio": {
+        "t": "Create a studio",
+        "d": "A studio is your team's storefront. Solo or invite co-authors."
+      },
+      "upload": {
+        "t": "Upload a build",
+        "d": "Drop the file, add screenshots, description and tags. Web games run right in the browser."
+      },
+      "publish": {
+        "t": "Publish",
+        "d": "Check price and commission, hit 'Publish' — the game enters the catalog and the feed."
+      }
+    },
+    "finTitle": "Ready to publish your first game?",
+    "finText": "All you need is a build and a couple of minutes. The platform handles the rest."
   }
 }

@@ -1,6 +1,6 @@
 <template>
     <div class="shell">
-        <!-- десктоп: сайдбар слева -->
+        <!-- десктоп: сайдбар-островок слева -->
         <AppSidebar class="shell__sb" />
 
         <div class="shell__col">
@@ -33,12 +33,12 @@
     flex: 1;
 }
 
-/* ── мобилка: сайдбар и топбар прячем, работают островки ── */
 .shell__sb,
 .shell__tb {
     display: none;
 }
 
+/* ── мобилка: работают островки ── */
 @media (max-width: 999px) {
     .shell {
         padding-top: calc(62px + env(safe-area-inset-top));
@@ -50,11 +50,12 @@
     }
 }
 
-/* ── десктоп ── */
+/* ── десктоп: сайдбар-островок + плавающий хедер ── */
 @media (min-width: 1000px) {
     .shell {
         display: grid;
-        grid-template-columns: 232px minmax(0, 1fr);
+        grid-template-columns: 244px minmax(0, 1fr);
+        align-items: start;
     }
 
     .shell__sb {

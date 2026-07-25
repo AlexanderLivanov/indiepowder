@@ -198,3 +198,10 @@ button { font: inherit; cursor: pointer; }
     linear-gradient(var(--p), var(--p)) 0 100% / 7px 7px no-repeat,
     linear-gradient(var(--p), var(--p)) 100% 100% / 7px 7px no-repeat;
 }
+
+* {
+  scrollbar-width: none;
+}
+*::-webkit-scrollbar {
+  display: none;
+}

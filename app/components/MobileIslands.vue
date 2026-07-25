@@ -53,9 +53,7 @@ function onStart(e: TouchEvent | MouseEvent) {
 function onMove(e: TouchEvent | MouseEvent) {
     if (!dragging.value) return
     const y = 'touches' in e ? e.touches[0]!.clientY : e.clientY
-    const d = y - startY
-    // тянуть вверх из «приоткрыт» можно, вниз — закрывает
-    drag.value = startSnap === 'full' ? Math.max(0, d) : d
+    drag.value = y - startY   // вверх < 0, вниз > 0
 }
 
 function onEnd() {
@@ -65,11 +63,11 @@ function onEnd() {
     drag.value = 0
 
     if (startSnap === 'partial') {
-        if (d < -60) snap.value = 'full'
-        else if (d > 70) snap.value = 'closed'
+        if (d < -50) snap.value = 'full'        // потянул вверх — раскрыть
+        else if (d > 70) snap.value = 'closed'  // потянул вниз — закрыть
     } else if (startSnap === 'full') {
-        if (d > 110) snap.value = 'closed'
-        else if (d > 50) snap.value = 'partial'
+        if (d > 130) snap.value = 'closed'      // сильно вниз — закрыть
+        else if (d > 50) snap.value = 'partial' // немного вниз — свернуть
     }
 }
 
@@ -89,10 +87,19 @@ watchEffect(() => {
 })
 onUnmounted(() => { if (import.meta.client) document.body.style.overflow = '' })
 
-const sheetStyle = computed(() => ({
-    transform: drag.value ? `translateY(${drag.value}px)` : '',
-    transition: dragging.value ? 'none' : '',
-}))
+// базовое смещение состояния: full = 0 (виден весь лист),
+// partial = сдвинут вниз так, что торчит только верхняя часть.
+const PARTIAL_OFFSET = 320   // на сколько px опущен лист в «приоткрытом» виде
+
+const sheetStyle = computed(() => {
+    const base = snap.value === 'full' ? 0 : PARTIAL_OFFSET
+    let y = base + drag.value
+    if (y < 0) y = y * 0.25          // за верхнюю границу — резинка
+    return {
+        transform: `translateY(${y}px)`,
+        transition: dragging.value ? 'none' : 'transform .34s cubic-bezier(.2,.8,.2,1)',
+    }
+})
 </script>
 
 <template>
@@ -254,11 +261,11 @@ const sheetStyle = computed(() => ({
     gap: 8px;
     max-width: calc(100vw - 28px);
     padding: 8px 15px;
-    border: 1px solid rgba(255, 255, 255, .09);
+    border: 1px solid rgba(195, 33, 120, .3);
     border-radius: 99px;
-    background: rgba(20, 4, 29, .82);
-    backdrop-filter: blur(16px) saturate(150%);
-    box-shadow: 0 8px 26px rgba(0, 0, 0, .45);
+    background: linear-gradient(180deg, rgba(58, 20, 74, .95), rgba(44, 12, 58, .95));
+    backdrop-filter: blur(16px) saturate(160%);
+    box-shadow: 0 8px 26px rgba(0, 0, 0, .5), 0 1px 0 rgba(255, 255, 255, .06) inset;
     color: var(--text);
     transition: transform .15s;
     -webkit-tap-highlight-color: transparent;
@@ -330,11 +337,11 @@ const sheetStyle = computed(() => ({
     align-items: center;
     gap: 11px;
     padding: 7px 14px 7px 7px;
-    border: 1px solid rgba(255, 255, 255, .1);
+    border: 1px solid rgba(195, 33, 120, .32);
     border-radius: 60px;
-    background: rgba(28, 8, 38, .88);
-    backdrop-filter: blur(16px) saturate(160%);
-    box-shadow: 0 10px 30px rgba(0, 0, 0, .5);
+    background: linear-gradient(180deg, rgba(60, 20, 78, .96), rgba(46, 13, 60, .96));
+    backdrop-filter: blur(16px) saturate(170%);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, .55), 0 1px 0 rgba(255, 255, 255, .07) inset;
     color: var(--text);
     text-align: left;
     transition: transform .15s;
@@ -456,7 +463,6 @@ const sheetStyle = computed(() => ({
     border-radius: 26px 26px 0 0;
     padding: 10px 16px calc(22px + env(safe-area-inset-bottom));
     box-shadow: 0 -18px 50px rgba(0, 0, 0, .6);
-    transition: max-height .34s cubic-bezier(.2, .8, .2, 1), transform .3s cubic-bezier(.2, .8, .2, 1);
     overflow: hidden;
 }
 
@@ -505,14 +511,25 @@ const sheetStyle = computed(() => ({
 }
 
 /* профиль: два размера */
+/* лист всегда полной высоты — состояния сдвигают его через translateY,
+   поэтому кнопки снизу отрисованы заранее и «разрыва» при перетаскивании нет */
 .sheet--profile {
-    max-height: 42dvh;
+    height: 92dvh;
+    max-height: 92dvh;
     touch-action: none;
+    display: flex;
+    flex-direction: column;
+    /* запас снизу, чтобы кнопки не упирались в край телефона */
+    padding-bottom: calc(40px + env(safe-area-inset-bottom));
 }
 
+/* в развёрнутом виде внутренность можно листать */
 .sheet--profile.is-full {
-    max-height: 88dvh;
     overflow-y: auto;
+}
+
+.sheet--profile.is-partial {
+    overflow: hidden;
 }
 
 .ph {
@@ -616,16 +633,13 @@ const sheetStyle = computed(() => ({
     font-size: 10.5px;
 }
 
-/* строки меню профиля — только в развёрнутом виде */
+/* строки меню профиля видны всегда — просто в «приоткрытом» виде
+   они уезжают ниже экрана вместе с листом */
 .pfull {
-    display: none;
+    display: flex;
     flex-direction: column;
     gap: 2px;
     margin-top: 16px;
-}
-
-.sheet--profile.is-full .pfull {
-    display: flex;
 }
 
 .prow {

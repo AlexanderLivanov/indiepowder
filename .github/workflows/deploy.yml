@@ -13,6 +13,9 @@ concurrency:
 jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
+    env:
+      # секреты доступны в if: только через env, напрямую нельзя
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
 
@@ -29,9 +32,7 @@ jobs:
 
       # ── миграции БД: только если они вообще есть и база подключена ──
       - name: Применить миграции на проде
-        if: ${{ secrets.DATABASE_URL != '' }}
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+        if: env.DATABASE_URL != ''
         run: |
           if ls drizzle/*.sql >/dev/null 2>&1; then
             npm run db:migrate

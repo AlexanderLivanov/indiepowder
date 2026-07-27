@@ -14,6 +14,8 @@
         <!-- мобилка: островки -->
         <MobileIslands />
         <AppToast />
+        <AppSplash />
+        <WhatsNew />
     </div>
 </template>
 

@@ -5,6 +5,7 @@ const { locale } = useI18n()
 const switchLocalePath = useSwitchLocalePath()
 const localePath = useLocalePath()
 const { user } = useAuth()
+const { show: showNews, hasUnseen } = useWhatsNew()
 
 /* ── поиск: сворачивается в иконку ── */
 const searchOpen = ref(false)
@@ -103,6 +104,15 @@ function onLogoLeave() { logoTilt.value = 0 }
             <NuxtLink class="ib ib--lang" :to="switchLocalePath(locale === 'ru' ? 'en' : 'ru')" :title="$t('tb.lang')">
                 {{ locale === 'ru' ? 'RU' : 'EN' }}
             </NuxtLink>
+
+            <!-- что нового -->
+            <button class="ib" :aria-label="$t('news.button')" :title="$t('news.button')" @click="showNews">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
+                    stroke-linejoin="round">
+                    <path d="M12 2L2 7l10 5 10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+                </svg>
+                <span v-if="hasUnseen" class="ib__dot" />
+            </button>
 
             <!-- лапка: ассистент Дасти -->
             <button class="ib ib--dusty" :aria-label="$t('tb.dusty')" :title="$t('tb.dusty')">

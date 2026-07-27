@@ -478,5 +478,22 @@
     },
     "finTitle": "Ready to publish your first game?",
     "finText": "All you need is a build and a couple of minutes. The platform handles the rest."
+  },
+  "news": {
+    "button": "What's new",
+    "next": "Next",
+    "done": "Got it",
+    "islands": {
+      "t": "Interface islands",
+      "d": "New navigation: floating panels that stay out of the way and stand out nicely against the background."
+    },
+    "devs": {
+      "t": "Developer section",
+      "d": "Publish games in a minute, tune your commission and track reviews — all on one page."
+    },
+    "profile": {
+      "t": "DustID profile",
+      "d": "One profile for both versions of the site: avatar, links, QR code and stats."
+    }
   }
 }

@@ -12,9 +12,17 @@
     "community": "community",
     "bugs": "bitpixel",
     "console": "console",
-    "ether": "ether",
+    "ether": "chats",
+    "feed": "feed",
     "search": "search",
     "notifications": "notifications"
+  },
+  "feed": {
+    "title": "Feed",
+    "today": "Today",
+    "composePlaceholder": "What inspires you right now?",
+    "publish": "Publish",
+    "writeArticle": "Write an article"
   },
   "hero": {
     "online": "{count} devs online",
@@ -206,7 +214,7 @@
     "waitUpload": "waiting for upload…",
     "send": "submit for review",
     "doneTitle": "Submitted for review",
-    "doneText": "“{name}” is queued. We usually review within a day — we'll message you on Ether.",
+    "doneText": "“{name}” is queued. We usually review within a day — we'll message you in Chats.",
     "another": "upload another"
   },
   "welcome": {
@@ -219,8 +227,8 @@
     "web_d": "Web builds run instantly. No installs, no launchers.",
     "assets": "Asset store",
     "assets_d": "Engine-agnostic: search by file type, intended use and compatibility.",
-    "ether": "Ether",
-    "ether_d": "Messenger for crews. Messages are encrypted on the server.",
+    "ether": "Chats",
+    "ether_d": "Private chats between developers. Messages are encrypted on the server.",
     "zero": "0% commission",
     "zero_d": "For games born at Dustore jams. Creators keep everything.",
     "pwa": "Install on your phone",
@@ -282,8 +290,8 @@
     "bugs_d": "A bug board with a region per game, plus reviews from invited experts.",
     "console": "Dev console",
     "console_d": "Analytics, game management and payouts. Coming with the database.",
-    "ether": "Ether",
-    "ether_d": "Messenger for crews, encrypted at rest.",
+    "ether": "Chats",
+    "ether_d": "Private chats between developers, encrypted at rest.",
     "profile": "Profile",
     "profile_d": "Your DustID: collection, friends, subscriptions and settings. Building it next.",
     "generic": "This section is still being built. Check back soon.",
@@ -328,6 +336,7 @@
   "sb": {
     "home": "Home",
     "catalog": "Catalog",
+    "feed": "Feed",
     "foryou": "For you",
     "new": "New",
     "popular": "Popular",

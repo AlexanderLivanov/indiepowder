@@ -10,7 +10,7 @@ const { t, te } = useI18n()
 
 const PLANNED: Record<string, string> = {
     assets: '▦', jams: '⏱', crews: '◈', devlogs: '✎', bugs: '▣',
-    console: '⚙', ether: '◇', library: '▤', bookmarks: '☆',
+    console: '⚙', library: '▤', bookmarks: '☆',
     history: '↺', collections: '▩', spawn: '◉', l4t: '▲', foryou: '✦',
     new: '✧', popular: '▲', free: '◇',
 }

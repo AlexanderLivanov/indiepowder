@@ -96,6 +96,43 @@ export const userIdentities = mysqlTable(
   }),
 );
 
+/**
+ * НОВАЯ таблица только для v3: посты ленты вдохновения (раздел /feed).
+ * Портировано из проекта StayInspired. Старый сайт о ней не знает —
+ * создавать безопасно. Автор поста ссылается на users.id (nullable —
+ * демо-посты сида автора не имеют).
+ */
+export const feedPosts = mysqlTable(
+  "feed_posts",
+  {
+    id: bigint("id", { mode: "number", unsigned: true })
+      .autoincrement()
+      .primaryKey(),
+    // тип карточки: spark | note | article | line | thread
+    kind: varchar("kind", { length: 16 }).notNull().default("note"),
+    authorId: int("author_id"), // users.id, либо null у демо/сида
+    authorName: varchar("author_name", { length: 190 }).notNull(),
+    authorHandle: varchar("author_handle", { length: 190 }).notNull(),
+    title: varchar("title", { length: 200 }), // только для article
+    body: text("body"), // текст поста / excerpt статьи
+    content: text("content"), // полный текст статьи (абзацы через \n\n)
+    mediaType: varchar("media_type", { length: 16 }), // image | video | null
+    mediaLabel: varchar("media_label", { length: 190 }),
+    up: int("up").notNull().default(0),
+    replies: int("replies").notNull().default(0),
+    createdAt: datetime("created_at")
+      .default(sql`CURRENT_TIMESTAMP`)
+      .notNull(),
+  },
+  (t) => ({
+    createdIdx: index("idx_feed_created").on(t.createdAt),
+    authorIdx: index("idx_feed_author").on(t.authorId),
+  }),
+);
+
+export type FeedPostRow = typeof feedPosts.$inferSelect;
+export type NewFeedPost = typeof feedPosts.$inferInsert;
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 

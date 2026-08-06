@@ -2,6 +2,7 @@ import { eq, sql as raw } from "drizzle-orm";
 import { hasDb, useDb } from "../db/client";
 import { users, roleName } from "../db/schema";
 import { hashPassword, verifyPassword } from "./password";
+import { withDbFallback } from "./dbFallback";
 
 /**
  * Работа с пользователями. Таблица одна — `users` в базе `dustore`,

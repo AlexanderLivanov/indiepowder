@@ -125,8 +125,8 @@ function onLogoLeave() { logoTilt.value = 0 }
                 </svg>
             </button>
 
-            <!-- личные чаты (Эфир) -->
-            <NuxtLink class="ib" :to="localePath('/ether')" :aria-label="$t('nav.ether')" :title="$t('nav.ether')">
+            <!-- личные чаты -->
+            <NuxtLink class="ib" :to="localePath('/chats')" :aria-label="$t('nav.ether')" :title="$t('nav.ether')">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"
                     stroke-linejoin="round">
                     <path

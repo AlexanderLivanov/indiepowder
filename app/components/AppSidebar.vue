@@ -7,6 +7,7 @@ const route = useRoute()
 const main = [
     { to: '/', key: 'home', icon: 'M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z' },
     { to: '/games', key: 'catalog', icon: 'M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z' },
+    { to: '/feed', key: 'feed', icon: 'M4 6h16M4 12h16M4 18h10' },
     { to: '/foryou', key: 'foryou', icon: 'M12 3a9 9 0 1 0 9 9M12 8v4l3 2' },
     { to: '/new', key: 'new', icon: 'M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M22 12h-6' },
     { to: '/popular', key: 'popular', icon: 'M12 21a9 9 0 0 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2' },
@@ -73,6 +74,16 @@ function surprise() {
                     <path d="M4 4h16v12H4zM2 20h20M9 9l2 2-2 2M13 13h3" />
                 </svg>
                 {{ $t('sb.console') }}
+            </NuxtLink>
+            <NuxtLink :to="localePath('/assets')" class="it it--devs">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
+                    <path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"
+                        d="M4.5 4.5H12c.83 0 1.5.67 1.5 1.5v.5m-7.5 7H2A1.5 1.5 0 0 1 .5 12V3.5a1 1 0 0 1 1-1h5a1 1 0 0 1 1 1v1" />
+                    <path fill="none" stroke="currentColor" stroke-linejoin="round" d="M12.923 11.904H7.5L10.212 7Z" />
+                    <path fill="none" stroke="currentColor" stroke-linejoin="round"
+                        d="M11.662 9.641a2.569 2.596 0 1 1-1.308 2.263" />
+                </svg>
+                {{ $t('sb.assets') }}
             </NuxtLink>
 
             <p class="sb__cap">{{ $t('sb.collections') }}</p>

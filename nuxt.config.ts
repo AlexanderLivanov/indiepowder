@@ -25,7 +25,7 @@ export default defineNuxtConfig({
     "/games/**": { swr: 3600 },
     "/login": { ssr: true },
     "/console/**": { ssr: false },
-    "/ether/**": { ssr: false },
+    "/chats": { ssr: false },
   },
 
   i18n: {

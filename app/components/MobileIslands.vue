@@ -14,9 +14,9 @@ const sectionKey = computed(() => {
 })
 const sectionLabel = computed(() => {
     const map: Record<string, string> = {
-        home: 'tabs.home', games: 'nav.games', assets: 'nav.assets', jams: 'nav.jams',
+        home: 'tabs.home', games: 'nav.games', feed: 'nav.feed', assets: 'nav.assets', jams: 'nav.jams',
         crews: 'nav.crews', devlogs: 'nav.devlogs', bugs: 'nav.bugs', console: 'nav.console',
-        ether: 'nav.ether', profile: 'tabs.profile', login: 'nav.login',
+        chats: 'nav.ether', profile: 'tabs.profile', login: 'nav.login',
     }
     return map[sectionKey.value] || 'tabs.home'
 })
@@ -27,6 +27,8 @@ const menuOpen = ref(false)
 const menu = [
     { to: '/', label: 'tabs.home', icon: 'M3 11l9-8 9 8v9a2 2 0 0 1-2 2h-4v-7H9v7H5a2 2 0 0 1-2-2z' },
     { to: '/games', label: 'nav.games', icon: 'M6 11h4M8 9v4M15 12h.01M18 10h.01M4 8h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z' },
+    { to: '/feed', label: 'nav.feed', icon: 'M4 6h16M4 12h16M4 18h10' },
+    { to: '/chats', label: 'nav.ether', icon: 'M21 11.5a8.38 8.38 0 0 1-9 8.35 8.5 8.5 0 0 1-3.8-.9L3 20l1.05-3.15A8.38 8.38 0 0 1 3.2 13 8.5 8.5 0 0 1 12 4.5a8.38 8.38 0 0 1 9 7z' },
     { to: '/assets', label: 'nav.assets', icon: 'M12 2l9 5v10l-9 5-9-5V7z' },
     { to: '/jams', label: 'nav.jams', icon: 'M12 2v6M12 2a5 5 0 0 1 5 5c0 4-5 9-5 9S7 11 7 7a5 5 0 0 1 5-5zM5 21h14' },
     { to: '/crews', label: 'nav.crews', icon: 'M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2M9 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8z' },
@@ -219,7 +221,7 @@ const sheetStyle = computed(() => {
                                     <span class="prow__ic">▦</span>{{ $t('islands.collection') }}<span
                                         class="prow__a">→</span>
                                 </NuxtLink>
-                                <NuxtLink :to="localePath('/ether')" class="prow">
+                                <NuxtLink :to="localePath('/chats')" class="prow">
                                     <span class="prow__ic">◇</span>{{ $t('nav.ether') }}<span class="prow__a">→</span>
                                 </NuxtLink>
                                 <NuxtLink :to="localePath('/console')" class="prow">

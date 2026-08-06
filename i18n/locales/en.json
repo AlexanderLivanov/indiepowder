@@ -14,6 +14,7 @@
     "console": "console",
     "ether": "chats",
     "feed": "feed",
+    "apps": "mobile",
     "search": "search",
     "notifications": "notifications"
   },
@@ -337,6 +338,7 @@
     "home": "Home",
     "catalog": "Catalog",
     "feed": "Feed",
+    "apps": "Mobile",
     "foryou": "For you",
     "new": "New",
     "popular": "Popular",

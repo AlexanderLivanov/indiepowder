@@ -23,6 +23,7 @@ export default defineNuxtConfig({
   routeRules: {
     "/": { swr: 3600 },
     "/games/**": { swr: 3600 },
+    "/apps/**": { swr: 3600 },
     "/login": { ssr: true },
     "/console/**": { ssr: false },
     "/chats": { ssr: false },

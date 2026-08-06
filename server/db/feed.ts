@@ -1,6 +1,7 @@
 import { desc } from "drizzle-orm";
 import { hasDb, useDb } from "./client";
 import { feedPosts, type FeedPostRow } from "./schema";
+import { isDbConnError } from "../utils/dbFallback";
 
 /**
  * Данные ленты вдохновения (раздел /feed, порт из StayInspired).
@@ -219,18 +220,6 @@ function memCreate(input: NewFeedInput, excerpt?: string): FeedPost {
   return post;
 }
 
-/** connection refused / db down — чтобы не ронять раздел 500-й */
-function isConnError(e: any): boolean {
-  const code = e?.code || e?.cause?.code || e?.errors?.[0]?.code;
-  return (
-    code === "ECONNREFUSED" ||
-    code === "ETIMEDOUT" ||
-    code === "ER_BAD_DB_ERROR" ||
-    code === "PROTOCOL_CONNECTION_LOST" ||
-    /ECONNREFUSED|ETIMEDOUT/.test(String(e?.message || ""))
-  );
-}
-
 export const useFeedStore = () => ({
   /** пост по id + его тред (комментарии) — для страницы /p/:id */
   async get(id: string): Promise<{ post: FeedPost; thread: FeedReply[] } | null> {
@@ -257,7 +246,7 @@ export const useFeedStore = () => ({
     } catch (e) {
       // база прописана в .env, но недоступна (MySQL не запущен и т.п.) —
       // лента продолжает работать на демо-данных вместо падения 500
-      if (isConnError(e)) {
+      if (isDbConnError(e)) {
         seedMem();
         return mem.slice(0, limit);
       }
@@ -306,7 +295,7 @@ export const useFeedStore = () => ({
       };
     } catch (e) {
       // база недоступна — публикуем во временную память, чтобы UX не ломался
-      if (isConnError(e)) return memCreate(input, excerpt);
+      if (isDbConnError(e)) return memCreate(input, excerpt);
       throw e;
     }
   },

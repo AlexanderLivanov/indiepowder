@@ -96,48 +96,71 @@ function fromDb(r: any): Row {
   };
 }
 
+/* ─────────── операции в памяти (запасной режим) ─────────── */
+async function memFindByEmail(email: string): Promise<Row | null> {
+  await seedMem();
+  return mem.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null;
+}
+async function memFindByNick(nick: string): Promise<Row | null> {
+  await seedMem();
+  return mem.find((u) => u.nick.toLowerCase() === nick.toLowerCase()) || null;
+}
+async function memFindById(id: number): Promise<Row | null> {
+  await seedMem();
+  return mem.find((u) => u.id === id) || null;
+}
+async function memCreate(data: {
+  nick: string;
+  email: string;
+  passwordHash: string | null;
+}): Promise<Row> {
+  await seedMem();
+  const row: Row = {
+    id: seq++,
+    nick: data.nick,
+    email: data.email.toLowerCase(),
+    passwordHash: data.passwordHash,
+    ...blank(),
+  };
+  mem.push(row);
+  return row;
+}
+
 export const useStore = () => ({
   async findByEmail(email: string): Promise<Row | null> {
-    if (!hasDb()) {
-      await seedMem();
-      return (
-        mem.find((u) => u.email.toLowerCase() === email.toLowerCase()) || null
-      );
-    }
-    const rows: any[] = await useDb()
-      .select()
-      .from(users)
-      .where(raw`lower(${users.email}) = ${email.toLowerCase()}`)
-      .limit(1);
-    return rows[0] ? fromDb(rows[0]) : null;
+    if (!hasDb()) return memFindByEmail(email);
+    return withDbFallback(async () => {
+      const rows: any[] = await useDb()
+        .select()
+        .from(users)
+        .where(raw`lower(${users.email}) = ${email.toLowerCase()}`)
+        .limit(1);
+      return rows[0] ? fromDb(rows[0]) : null;
+    }, () => memFindByEmail(email));
   },
 
   async findByNick(nick: string): Promise<Row | null> {
-    if (!hasDb()) {
-      await seedMem();
-      return (
-        mem.find((u) => u.nick.toLowerCase() === nick.toLowerCase()) || null
-      );
-    }
-    const rows: any[] = await useDb()
-      .select()
-      .from(users)
-      .where(raw`lower(${users.username}) = ${nick.toLowerCase()}`)
-      .limit(1);
-    return rows[0] ? fromDb(rows[0]) : null;
+    if (!hasDb()) return memFindByNick(nick);
+    return withDbFallback(async () => {
+      const rows: any[] = await useDb()
+        .select()
+        .from(users)
+        .where(raw`lower(${users.username}) = ${nick.toLowerCase()}`)
+        .limit(1);
+      return rows[0] ? fromDb(rows[0]) : null;
+    }, () => memFindByNick(nick));
   },
 
   async findById(id: number): Promise<Row | null> {
-    if (!hasDb()) {
-      await seedMem();
-      return mem.find((u) => u.id === id) || null;
-    }
-    const rows: any[] = await useDb()
-      .select()
-      .from(users)
-      .where(eq(users.id, id))
-      .limit(1);
-    return rows[0] ? fromDb(rows[0]) : null;
+    if (!hasDb()) return memFindById(id);
+    return withDbFallback(async () => {
+      const rows: any[] = await useDb()
+        .select()
+        .from(users)
+        .where(eq(users.id, id))
+        .limit(1);
+      return rows[0] ? fromDb(rows[0]) : null;
+    }, () => memFindById(id));
   },
 
   /** новые регистрации идут в ту же таблицу, что и у старого сайта */
@@ -149,39 +172,31 @@ export const useStore = () => ({
     const passwordHash = data.password
       ? await hashPassword(data.password)
       : null;
+    const mem_ = () =>
+      memCreate({ nick: data.nick, email: data.email, passwordHash });
 
-    if (!hasDb()) {
-      await seedMem();
-      const row: Row = {
-        id: seq++,
-        nick: data.nick,
+    if (!hasDb()) return mem_();
+
+    return withDbFallback(async () => {
+      const now = new Date();
+      await useDb().insert(users).values({
+        username: data.nick,
         email: data.email.toLowerCase(),
-        passwordHash,
-        ...blank(),
-      };
-      mem.push(row);
-      return row;
-    }
-
-    const now = new Date();
-    await useDb().insert(users).values({
-      username: data.nick,
-      email: data.email.toLowerCase(),
-      password: passwordHash,
-      globalRole: 0,
-      role: "user",
-      emailVerified: 0,
-      votesUp: 0,
-      votesDown: 0,
-      profileViews: 0,
-      added: now,
-      updated: now,
-      lastActivity: now,
-    });
-
-    const created = await this.findByEmail(data.email);
-    if (!created) throw new Error("не удалось создать пользователя");
-    return created;
+        password: passwordHash,
+        globalRole: 0,
+        role: "user",
+        emailVerified: 0,
+        votesUp: 0,
+        votesDown: 0,
+        profileViews: 0,
+        added: now,
+        updated: now,
+        lastActivity: now,
+      });
+      const created = await this.findByEmail(data.email);
+      if (!created) throw new Error("не удалось создать пользователя");
+      return created;
+    }, mem_);
   },
 
   /** обновление профиля из личного кабинета */
@@ -197,27 +212,30 @@ export const useStore = () => ({
       l4tRole?: string;
     },
   ): Promise<Row | null> {
-    if (!hasDb()) {
+    const mem_ = async () => {
       const row = mem.find((u) => u.id === id);
       if (row) Object.assign(row, patch);
       return row || null;
-    }
+    };
+    if (!hasDb()) return mem_();
 
-    const set: Record<string, unknown> = { updated: new Date() };
-    if (patch.displayName !== undefined) {
-      const [first, ...rest] = patch.displayName.trim().split(/\s+/);
-      set.firstName = first || null;
-      set.lastName = rest.join(" ") || null;
-    }
-    if (patch.city !== undefined) set.city = patch.city || null;
-    if (patch.country !== undefined) set.country = patch.country || null;
-    if (patch.about !== undefined) set.l4tAbout = patch.about || null;
-    if (patch.website !== undefined) set.website = patch.website || null;
-    if (patch.vk !== undefined) set.vk = patch.vk || null;
-    if (patch.l4tRole !== undefined) set.l4tRole = patch.l4tRole || null;
+    return withDbFallback(async () => {
+      const set: Record<string, unknown> = { updated: new Date() };
+      if (patch.displayName !== undefined) {
+        const [first, ...rest] = patch.displayName.trim().split(/\s+/);
+        set.firstName = first || null;
+        set.lastName = rest.join(" ") || null;
+      }
+      if (patch.city !== undefined) set.city = patch.city || null;
+      if (patch.country !== undefined) set.country = patch.country || null;
+      if (patch.about !== undefined) set.l4tAbout = patch.about || null;
+      if (patch.website !== undefined) set.website = patch.website || null;
+      if (patch.vk !== undefined) set.vk = patch.vk || null;
+      if (patch.l4tRole !== undefined) set.l4tRole = patch.l4tRole || null;
 
-    await useDb().update(users).set(set).where(eq(users.id, id));
-    return this.findById(id);
+      await useDb().update(users).set(set).where(eq(users.id, id));
+      return this.findById(id);
+    }, mem_);
   },
 
   async touchActivity(id: number) {
@@ -228,7 +246,7 @@ export const useStore = () => ({
         .set({ lastActivity: new Date() })
         .where(eq(users.id, id));
     } catch {
-      /* не критично */
+      /* не критично: активность не обновилась — не беда */
     }
   },
 

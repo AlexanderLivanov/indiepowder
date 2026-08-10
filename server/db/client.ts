@@ -18,6 +18,9 @@ function connect() {
     uri: url,
     connectionLimit: 10,
     charset: "utf8mb4_unicode_ci", // одинаковая кодировка везде — иначе кириллица поедет
+    // legacy-данные содержат '0000-00-00' и кривые даты — если драйвер попытается
+    // сконвертировать их в JS Date, запрос упадёт. Отдаём даты строками.
+    dateStrings: true,
   });
   return drizzle(pool, { schema, mode: "default" });
 }

@@ -1,7 +1,6 @@
-import { and, desc, eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { hasDb, useDb } from "./client";
 import { games, type GameRow } from "./schema";
-import { isDbConnError } from "../utils/dbFallback";
 
 /**
  * Чтение реальных игр из таблицы `games` (база dustore).
@@ -35,22 +34,55 @@ export interface DbGame {
   requirements: string;
 }
 
-/** «а, б, в» / перенос строки / JSON-массив → массив строк */
+/** «а, б, в» / перенос строки → массив строк (для platforms, languages) */
 function parseList(v: string | null): string[] {
+  if (!v) return [];
+  return v
+    .split(/[\n,]+/)
+    .map((x) => x.trim())
+    .filter(Boolean);
+}
+
+/** screenshots в БД: [{"id":"..","path":"https://.."}] либо массив URL-строк */
+function toUrlList(v: string | null): string[] {
   if (!v) return [];
   const s = v.trim();
   if (s.startsWith("[")) {
     try {
       const arr = JSON.parse(s);
-      if (Array.isArray(arr)) return arr.map(String).map((x) => x.trim()).filter(Boolean);
+      if (Array.isArray(arr))
+        return arr
+          .map((it: any) =>
+            typeof it === "string" ? it : it?.path || it?.url || it?.src || "",
+          )
+          .filter(Boolean);
     } catch {
-      /* не JSON — падаем в split ниже */
+      /* не JSON */
     }
   }
-  return s
-    .split(/[\n,]+/)
-    .map((x) => x.trim())
-    .filter(Boolean);
+  return parseList(s);
+}
+
+/** features/requirements в БД: [{"icon","title","description"}] / [{"label",..}] */
+function toTitleList(v: string | null): string[] {
+  if (!v) return [];
+  const s = v.trim();
+  if (s.startsWith("[")) {
+    try {
+      const arr = JSON.parse(s);
+      if (Array.isArray(arr))
+        return arr
+          .map((it: any) => {
+            if (typeof it === "string") return it;
+            const t = [it?.icon, it?.title].filter(Boolean).join(" ").trim();
+            return t || it?.label || "";
+          })
+          .filter(Boolean);
+    } catch {
+      /* не JSON */
+    }
+  }
+  return parseList(s);
 }
 
 function isoDate(d: unknown): string | null {
@@ -79,7 +111,7 @@ function map(r: GameRow): DbGame {
     banner: r.bannerUrl || null,
     trailer: r.trailerUrl || null,
     website: r.gameWebsite || null,
-    screenshots: parseList(r.screenshots),
+    screenshots: toUrlList(r.screenshots),
     gqi,
     rating: gqi != null ? round1(gqi / 20) : 0,
     ratingCount: r.ratingCount ?? 0,
@@ -87,8 +119,8 @@ function map(r: GameRow): DbGame {
     inSubscription: Boolean(r.inSubscription),
     languages: parseList(r.languages),
     ageRating: r.ageRating || "",
-    features: parseList(r.features),
-    requirements: r.requirements || "",
+    features: toTitleList(r.features),
+    requirements: toTitleList(r.requirements).join(", "),
   };
 }
 
@@ -100,13 +132,14 @@ export const useGamesStore = () => ({
       const rows: GameRow[] = await useDb()
         .select()
         .from(games)
-        .where(and(eq(games.status, "published"), eq(games.hidden, 0)))
+        .where(eq(games.status, "published"))
         .orderBy(desc(games.createdAt))
         .limit(limit);
       return rows.map(map);
     } catch (e) {
-      if (isDbConnError(e)) return [];
-      throw e;
+      // не роняем витрину 500-й: логируем и отдаём пусто (фронт покажет демо)
+      console.error("[games.list] запрос упал:", e);
+      return [];
     }
   },
 
@@ -123,8 +156,8 @@ export const useGamesStore = () => ({
         .limit(1);
       return rows[0] ? map(rows[0]) : null;
     } catch (e) {
-      if (isDbConnError(e)) return null;
-      throw e;
+      console.error("[games.get] запрос упал:", e);
+      return null;
     }
   },
 });

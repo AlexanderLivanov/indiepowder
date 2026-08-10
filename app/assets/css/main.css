@@ -2,6 +2,16 @@
    DUSTORE — дизайн-токены. Одна тема: маджента.
    Всё, что тут в :root — доступно во всех компонентах.
    ============================================================ */
+
+/* пиксельный бренд-шрифт (положить файл в public/fonts/) */
+@font-face {
+  font-family: 'Pixelizer Bold';
+  src: url('/fonts/PixelizerBold.ttf') format('truetype');
+  font-weight: 400 800;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* поверхности */
   --bg: #14041d;
@@ -26,7 +36,7 @@
   --hero: linear-gradient(160deg, #14041d 0%, #400c4a 45%, #74155d 78%, #c32178 130%);
 
   /* шрифты */
-  --f-brand: 'Tiny5', system-ui, sans-serif;
+  --f-brand: 'Pixelizer Bold', 'Tiny5', system-ui, sans-serif;
   --f-display: 'Syne', system-ui, sans-serif;
   --f-body: 'Inter', system-ui, sans-serif;
   --f-mono: 'JetBrains Mono', ui-monospace, monospace;

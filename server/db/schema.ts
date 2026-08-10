@@ -152,20 +152,20 @@ export const games = mysqlTable("games", {
   badge: int("badge"),
   developer: int("developer"), // id студии-разработчика
   publisher: int("publisher"),
-  sprintId: bigint("sprint_id", { mode: "number", unsigned: true }),
   name: text("name"),
   genre: varchar("genre", { length: 50 }),
   shortDescription: text("short_description"),
   description: text("description"),
   platforms: varchar("platforms", { length: 100 }),
-  releaseDate: date("release_date"),
+  // даты — строками: в проде встречается '0000-00-00', Date-конверсия падает
+  releaseDate: date("release_date", { mode: "string" }),
   pathToCover: varchar("path_to_cover", { length: 255 }),
   gameWebsite: varchar("game_website", { length: 255 }),
   status: mysqlEnum("status", ["draft", "published", "closed"]).notNull(),
   gqi: tinyint("GQI", { unsigned: true }), // индекс качества 0-100
   ratingBoost: float("rating_boost"),
-  createdAt: timestamp("created_at").notNull(),
-  updatedAt: timestamp("updated_at").notNull(),
+  createdAt: timestamp("created_at", { mode: "string" }).notNull(),
+  updatedAt: timestamp("updated_at", { mode: "string" }).notNull(),
   bannerUrl: varchar("banner_url", { length: 255 }),
   iconUrl: varchar("icon_url", { length: 255 }),
   trailerUrl: varchar("trailer_url", { length: 255 }),
@@ -178,7 +178,6 @@ export const games = mysqlTable("games", {
   achievements: text("achievements"),
   price: decimal("price", { precision: 10, scale: 2 }),
   inSubscription: tinyint("in_subscription"),
-  hidden: tinyint("hidden").notNull(),
 });
 
 export type GameRow = typeof games.$inferSelect;

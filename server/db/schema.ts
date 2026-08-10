@@ -5,6 +5,12 @@ import {
   bigint,
   text,
   datetime,
+  date,
+  timestamp,
+  tinyint,
+  float,
+  decimal,
+  mysqlEnum,
   index,
 } from "drizzle-orm/mysql-core";
 import { sql } from "drizzle-orm";
@@ -132,6 +138,50 @@ export const feedPosts = mysqlTable(
 
 export type FeedPostRow = typeof feedPosts.$inferSelect;
 export type NewFeedPost = typeof feedPosts.$inferInsert;
+
+/**
+ * СУЩЕСТВУЮЩАЯ прод-таблица `games` (её создал старый сайт) — как и `users`,
+ * мы её только ЧИТАЕМ и НЕ создаём миграцией. Объявлены лишь те колонки,
+ * что нужны витрине; остальные колонки БД Drizzle просто игнорирует при select.
+ *
+ * ⚠️ Если запустите `drizzle-kit generate` — он предложит СОЗДАТЬ эту таблицу.
+ *    Такую миграцию применять НЕ нужно (таблица уже есть на проде).
+ */
+export const games = mysqlTable("games", {
+  id: int("id").autoincrement().primaryKey(),
+  badge: int("badge"),
+  developer: int("developer"), // id студии-разработчика
+  publisher: int("publisher"),
+  sprintId: bigint("sprint_id", { mode: "number", unsigned: true }),
+  name: text("name"),
+  genre: varchar("genre", { length: 50 }),
+  shortDescription: text("short_description"),
+  description: text("description"),
+  platforms: varchar("platforms", { length: 100 }),
+  releaseDate: date("release_date"),
+  pathToCover: varchar("path_to_cover", { length: 255 }),
+  gameWebsite: varchar("game_website", { length: 255 }),
+  status: mysqlEnum("status", ["draft", "published", "closed"]).notNull(),
+  gqi: tinyint("GQI", { unsigned: true }), // индекс качества 0-100
+  ratingBoost: float("rating_boost"),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  bannerUrl: varchar("banner_url", { length: 255 }),
+  iconUrl: varchar("icon_url", { length: 255 }),
+  trailerUrl: varchar("trailer_url", { length: 255 }),
+  ratingCount: int("rating_count"),
+  features: text("features"),
+  screenshots: text("screenshots"),
+  requirements: text("requirements"),
+  languages: varchar("languages", { length: 100 }),
+  ageRating: varchar("age_rating", { length: 20 }),
+  achievements: text("achievements"),
+  price: decimal("price", { precision: 10, scale: 2 }),
+  inSubscription: tinyint("in_subscription"),
+  hidden: tinyint("hidden").notNull(),
+});
+
+export type GameRow = typeof games.$inferSelect;
 
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;

@@ -10,9 +10,17 @@ export default defineNuxtConfig({
   // и заметный расход памяти при сборке
   sourcemap: { server: false, client: false },
 
-  // секреты только на сервере; NUXT_SESSION_SECRET из .env перекрывает значение
+  // секреты только на сервере; NUXT_* из .env перекрывают значения.
+  // напр. NUXT_YANDEX_CLIENT_SECRET → runtimeConfig.yandex.clientSecret
   runtimeConfig: {
     sessionSecret: "",
+    yandex: { clientId: "", clientSecret: "" },
+    vk: { clientId: "", clientSecret: "" },
+    telegram: { botToken: "", botName: "" },
+    // публичное (доступно и в браузере): имя бота для Telegram-виджета
+    public: {
+      telegramBot: "",
+    },
   },
 
   // ── режим рендеринга по маршрутам ─────────────────────────────
@@ -21,11 +29,15 @@ export default defineNuxtConfig({
   // и на слабой машине съедает всю память (сборка падает с «Killed»).
   // swr даёт тот же эффект — страница кешируется, но уже в рантайме.
   routeRules: {
-    "/": { swr: 3600 },
+    // ВАЖНО: у "/" НЕ ставим swr — на корне i18n пишет cookie языка
+    // (detectBrowserLanguage.redirectOn: 'root'), а на закэшированном ответе
+    // заголовки уже отправлены → «Cannot append headers…» и падение SSR
+    // (проявлялось после OAuth-редиректа на /?welcome=1).
     "/games/**": { swr: 3600 },
     "/apps/**": { swr: 3600 },
     "/login": { ssr: true },
     "/console/**": { ssr: false },
+    "/settings/**": { ssr: false },
     "/chats": { ssr: false },
   },
 

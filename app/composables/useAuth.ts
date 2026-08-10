@@ -70,6 +70,26 @@ export function useAuth() {
     await navigateTo("/");
   }
 
+  /** завершение Telegram-входа: пользователь ввёл email (нового аккаунта) */
+  async function telegramComplete(token: string, email: string) {
+    pending.value = true;
+    try {
+      const r = await $fetch<{ user: SessionUser }>(
+        "/api/auth/telegram/complete",
+        { method: "POST", body: { token, email } },
+      );
+      user.value = r.user;
+      return { ok: true as const };
+    } catch (e: any) {
+      return {
+        ok: false as const,
+        code: e?.statusMessage || e?.data?.statusMessage || "ERROR",
+      };
+    } finally {
+      pending.value = false;
+    }
+  }
+
   async function saveProfile(patch: Record<string, string>) {
     const r = await $fetch<{ user: SessionUser }>("/api/profile", {
       method: "PATCH",
@@ -79,5 +99,14 @@ export function useAuth() {
     return r.user;
   }
 
-  return { user, pending, fetchUser, login, register, logout, saveProfile };
+  return {
+    user,
+    pending,
+    fetchUser,
+    login,
+    register,
+    logout,
+    saveProfile,
+    telegramComplete,
+  };
 }

@@ -3,6 +3,11 @@ import { useI18n } from '#imports'
 
 const { t } = useI18n()
 
+// реальные игры из БД (если есть) — иначе демо
+const real = await useRealGames()
+const source = computed(() => real.value.length ? real.value : GAMES)
+const allTags = computed(() => [...new Set(source.value.flatMap((g) => g.tags))].sort())
+
 const view = ref<'picks' | 'all'>('picks')
 
 // зерно дня считаем на сервере и передаём в браузер —
@@ -36,7 +41,7 @@ const sorts = [
 
 const list = computed(() => {
     const q = query.value.trim().toLowerCase()
-    const filtered = GAMES.filter((g) => {
+    const filtered = source.value.filter((g) => {
         const byT = activeTag.value === 'all' || g.tags.includes(activeTag.value)
         const byQ = !q || g.title.toLowerCase().includes(q) || g.author.includes(q)
         return byT && byQ
@@ -69,7 +74,7 @@ useSeoMeta({
                     }}</button>
                 <button :class="{ 'is-on': view === 'all' }" @click="view = 'all'">{{ $t('catalog.viewAll', {
                     n:
-                    GAMES.length }) }}</button>
+                    source.length }) }}</button>
             </div>
         </header>
 
@@ -118,7 +123,7 @@ useSeoMeta({
             <div class="tags" :class="{ 'is-open': filtersOpen }">
                 <button class="tagbtn" :class="{ 'is-on': activeTag === 'all' }" @click="activeTag = 'all'">{{
                     $t('catalog.all') }}</button>
-                <button v-for="tg in GAME_TAGS" :key="tg" class="tagbtn" :class="{ 'is-on': activeTag === tg }"
+                <button v-for="tg in allTags" :key="tg" class="tagbtn" :class="{ 'is-on': activeTag === tg }"
                     @click="activeTag = tg">{{ tg }}</button>
             </div>
 

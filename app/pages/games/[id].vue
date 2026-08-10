@@ -1,16 +1,58 @@
 <script setup lang="ts">
 import { useI18n, useLocalePath } from '#imports'
+import type { DbGame } from '~~/server/db/games'
 
 const route = useRoute()
 const localePath = useLocalePath()
 const { t } = useI18n()
 
-const game = findGame(String(route.params.id))
+// 1) реальная игра из БД (если есть). На 404/без базы data будет null.
+const { data: real } = await useFetch<{ game: DbGame }>(
+    () => `/api/games/${route.params.id}`, { default: () => null as any })
+const dbGame = computed<DbGame | null>(() => real.value?.game ?? null)
+
+// URL картинки → CSS-фон (обложки и скриншоты у реальных игр — это ссылки)
+function bg(url: string | null): string {
+    return url ? `url("${url}") center / cover no-repeat` : '#20082b'
+}
+
+// адаптер: строка БД → форма, которую ждёт эта страница (demo-shape)
+function toGame(r: DbGame): Game {
+    const d = r.releaseDate ? Number(r.releaseDate.replace(/-/g, '')) : 0
+    const shots = r.screenshots.length ? r.screenshots.map(bg) : [bg(r.cover)]
+    return {
+        id: r.id, title: r.name, author: '—',
+        tags: [r.genre, ...r.platforms].filter(Boolean),
+        plays: 0, shows: 0, rating: r.rating, votes: r.ratingCount, price: r.price,
+        cover: bg(r.icon || r.cover), date: d,
+        engine: r.platforms[0] || '—', size: '—', web: false,
+        desc: r.shortDescription || r.description.slice(0, 140),
+        about: r.description || r.shortDescription, shots,
+    }
+}
+
+// 2) запасной вариант — демо-игра по slug
+const demo = findGame(String(route.params.id))
+const game = dbGame.value ? toGame(dbGame.value) : demo
 if (!game) throw createError({ statusCode: 404, statusMessage: 'Игра не найдена', fatal: true })
 
 const x = gameExtra(game)
 const summary = reviewSummary(x.reviews)
 const similar = computed(() => similarGames(game!))
+
+// ── медиа-галерея: трейлер (если есть) + скриншоты ──
+interface Media { kind: 'video' | 'bg'; val: string; poster?: string }
+const media = computed<Media[]>(() => {
+    const arr: Media[] = []
+    const tr = dbGame.value?.trailer
+    if (tr) arr.push({ kind: 'video', val: tr, poster: dbGame.value?.screenshots[0] || dbGame.value?.banner || undefined })
+    for (const s of game!.shots) arr.push({ kind: 'bg', val: s })
+    return arr
+})
+function thumbStyle(m: Media) {
+    if (m.kind === 'bg') return { background: m.val }
+    return m.poster ? { background: bg(m.poster) } : undefined
+}
 
 const shot = ref(0)
 const tab = ref<'players' | 'experts'>('players')
@@ -61,6 +103,7 @@ const priceLabel = computed(() =>
 )
 const releaseDate = computed(() => {
     const d = String(game!.date)
+    if (!game!.date || d.length < 8) return '—'
     return `${d.slice(6, 8)}.${d.slice(4, 6)}.${d.slice(0, 4)}`
 })
 
@@ -82,14 +125,21 @@ useSeoMeta({
         <!-- ═════════ ВЕРХ ═════════ -->
         <div class="gp__top">
             <div class="gal">
-                <div class="gal__main" :style="{ background: game.shots[shot] }">
-                    <button v-if="game.web" class="gal__web" @click="playing = true">▶ {{ $t('game.playInBrowser')
-                        }}</button>
+                <div class="gal__main">
+                    <video v-if="media[shot]?.kind === 'video'" class="gal__media" :src="media[shot].val"
+                        :poster="media[shot].poster" controls playsinline />
+                    <div v-else class="gal__media" :style="{ background: media[shot]?.val }">
+                        <button v-if="game.web" class="gal__web" @click="playing = true">▶ {{ $t('game.playInBrowser')
+                            }}</button>
+                    </div>
                 </div>
                 <div class="gal__thumbs">
-                    <button v-for="(s, i) in game.shots" :key="i" class="gal__t" :class="{ 'is-on': i === shot }"
-                        :style="{ background: s }" :aria-label="`${$t('game.screenshot')} ${i + 1}`"
-                        @click="shot = i" />
+                    <button v-for="(m, i) in media" :key="i" class="gal__t" :class="{ 'is-on': i === shot }"
+                        :style="thumbStyle(m)"
+                        :aria-label="m.kind === 'video' ? 'Трейлер' : `${$t('game.screenshot')} ${i + 1}`"
+                        @click="shot = i">
+                        <span v-if="m.kind === 'video'" class="gal__play">▶</span>
+                    </button>
                 </div>
             </div>
 
@@ -374,6 +424,17 @@ useSeoMeta({
     border-radius: var(--r-lg);
     border: 1px solid var(--border);
     overflow: hidden;
+    background: #000;
+}
+
+.gal__media {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    background-size: cover;
+    background-position: center;
 }
 
 .gal__web {
@@ -400,15 +461,25 @@ useSeoMeta({
     display: flex;
     gap: 8px;
     margin-top: 8px;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+}
+
+.gal__thumbs::-webkit-scrollbar {
+    display: none;
 }
 
 .gal__t {
-    flex: 1;
-    height: 54px;
+    position: relative;
+    flex: 0 0 92px;
+    aspect-ratio: 16 / 9;
     border: 1px solid var(--border);
     border-radius: var(--r-sm);
     padding: 0;
     opacity: .55;
+    background-size: cover;
+    background-position: center;
     transition: opacity .2s, border-color .2s;
 }
 
@@ -416,6 +487,16 @@ useSeoMeta({
 .gal__t:hover {
     opacity: 1;
     border-color: var(--p);
+}
+
+.gal__play {
+    position: absolute;
+    inset: 0;
+    display: grid;
+    place-items: center;
+    color: #fff;
+    font-size: 15px;
+    background: rgba(0, 0, 0, .35);
 }
 
 /* правая панель покупки */

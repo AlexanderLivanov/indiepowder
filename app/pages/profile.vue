@@ -217,6 +217,9 @@ useSeoMeta({ title: () => user.value ? `${user.value.nick} — Dustore` : 'Пр�
             <div class="card block">
                 <h2>{{ $t('profile.shared') }}</h2>
                 <p class="muted note">{{ $t('profile.sharedNote') }}</p>
+                <NuxtLink :to="localePath('/settings/accounts')" class="btn btn--sm">
+                    ⚿ Связанные аккаунты →
+                </NuxtLink>
             </div>
 
             <div class="card block danger">

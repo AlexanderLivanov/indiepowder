@@ -3,6 +3,10 @@ import { useLocalePath } from '#imports'
 
 const localePath = useLocalePath()
 
+// реальные игры из БД (если есть) — иначе демо
+const real = await useRealGames()
+const source = computed(() => real.value.length ? real.value : GAMES)
+
 // четыре компактные полки сверху
 const cont = GAMES.slice(0, 3).map((g, i) => ({ ...g, progress: [81, 56, 12][i]! }))
 const forYou = hiddenGems(3)
@@ -15,7 +19,7 @@ const PER = 8
 const sort = ref<'pop' | 'new' | 'rating' | 'cheap'>('pop')
 
 const sorted = computed(() => {
-    const a = [...GAMES]
+    const a = [...source.value]
     if (sort.value === 'new') a.sort((x, y) => y.date - x.date)
     else if (sort.value === 'rating') a.sort((x, y) => y.rating - x.rating)
     else if (sort.value === 'cheap') a.sort((x, y) => x.price - y.price)

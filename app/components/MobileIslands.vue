@@ -228,6 +228,9 @@ const sheetStyle = computed(() => {
                                 <NuxtLink :to="localePath('/console')" class="prow">
                                     <span class="prow__ic">⚙</span>{{ $t('nav.console') }}<span class="prow__a">→</span>
                                 </NuxtLink>
+                                <NuxtLink :to="localePath('/settings/accounts')" class="prow">
+                                    <span class="prow__ic">⚿</span>Связанные аккаунты<span class="prow__a">→</span>
+                                </NuxtLink>
                                 <button class="prow prow--out" @click="logout()">
                                     <span class="prow__ic">⏻</span>{{ $t('islands.logout') }}
                                 </button>

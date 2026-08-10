@@ -41,17 +41,38 @@ const summary = reviewSummary(x.reviews)
 const similar = computed(() => similarGames(game!))
 
 // ── медиа-галерея: трейлер (если есть) + скриншоты ──
-interface Media { kind: 'video' | 'bg'; val: string; poster?: string }
+interface Media { kind: 'iframe' | 'video' | 'image' | 'bg'; val: string; poster?: string }
+
+// trailer_url бывает: YouTube, VK (video_ext.php), прямой файл, иногда картинка
+function trailerMedia(url: string): Media {
+    const u = url.trim()
+    let m = u.match(/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|shorts\/))([\w-]{6,})/)
+    if (m) return { kind: 'iframe', val: `https://www.youtube.com/embed/${m[1]}` }
+    if (/vk(?:video)?\.(?:ru|com)\/video_ext\.php/.test(u)) return { kind: 'iframe', val: u }
+    m = u.match(/vk(?:video)?\.(?:ru|com)\/video(-?\d+)_(\d+)/)
+    if (m) return { kind: 'iframe', val: `https://vk.com/video_ext.php?oid=${m[1]}&id=${m[2]}` }
+    if (/\.(mp4|webm|ogv)(\?|$)/i.test(u)) return { kind: 'video', val: u }
+    if (/\.(jpe?g|png|gif|webp|avif)(\?|$)/i.test(u) || /leonardo\.osnova/.test(u)) return { kind: 'image', val: u }
+    return { kind: 'iframe', val: u } // неизвестное — пробуем как эмбед
+}
+
 const media = computed<Media[]>(() => {
     const arr: Media[] = []
     const tr = dbGame.value?.trailer
-    if (tr) arr.push({ kind: 'video', val: tr, poster: dbGame.value?.screenshots[0] || dbGame.value?.banner || undefined })
+    if (tr) {
+        const t = trailerMedia(tr)
+        t.poster = dbGame.value?.screenshots[0] || dbGame.value?.banner || undefined
+        arr.push(t)
+    }
     for (const s of game!.shots) arr.push({ kind: 'bg', val: s })
     return arr
 })
 function thumbStyle(m: Media) {
     if (m.kind === 'bg') return { background: m.val }
     return m.poster ? { background: bg(m.poster) } : undefined
+}
+function isPlayable(m?: Media) {
+    return m?.kind === 'iframe' || m?.kind === 'video'
 }
 
 const shot = ref(0)
@@ -126,8 +147,12 @@ useSeoMeta({
         <div class="gp__top">
             <div class="gal">
                 <div class="gal__main">
-                    <video v-if="media[shot]?.kind === 'video'" class="gal__media" :src="media[shot].val"
+                    <iframe v-if="media[shot]?.kind === 'iframe'" class="gal__media gal__frame"
+                        :src="media[shot].val" allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+                        allowfullscreen />
+                    <video v-else-if="media[shot]?.kind === 'video'" class="gal__media" :src="media[shot].val"
                         :poster="media[shot].poster" controls playsinline />
+                    <img v-else-if="media[shot]?.kind === 'image'" class="gal__media" :src="media[shot].val" alt="">
                     <div v-else class="gal__media" :style="{ background: media[shot]?.val }">
                         <button v-if="game.web" class="gal__web" @click="playing = true">▶ {{ $t('game.playInBrowser')
                             }}</button>
@@ -136,9 +161,9 @@ useSeoMeta({
                 <div class="gal__thumbs">
                     <button v-for="(m, i) in media" :key="i" class="gal__t" :class="{ 'is-on': i === shot }"
                         :style="thumbStyle(m)"
-                        :aria-label="m.kind === 'video' ? 'Трейлер' : `${$t('game.screenshot')} ${i + 1}`"
+                        :aria-label="isPlayable(m) ? 'Трейлер' : `${$t('game.screenshot')} ${i + 1}`"
                         @click="shot = i">
-                        <span v-if="m.kind === 'video'" class="gal__play">▶</span>
+                        <span v-if="isPlayable(m)" class="gal__play">▶</span>
                     </button>
                 </div>
             </div>
@@ -435,6 +460,11 @@ useSeoMeta({
     object-fit: cover;
     background-size: cover;
     background-position: center;
+}
+
+.gal__frame {
+    border: 0;
+    object-fit: fill;
 }
 
 .gal__web {

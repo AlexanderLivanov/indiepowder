@@ -39,3 +39,21 @@ export async function withDbFallback<T>(
     throw e;
   }
 }
+
+/**
+ * Как withDbFallback, но деградирует на ЛЮБОЙ ошибке (не только соединения):
+ * нет таблицы, кривые данные и т.п. Для некритичных данных, где 500 недопустим
+ * (напр. список привязанных аккаунтов). Ошибку логируем.
+ */
+export async function withDbSafe<T>(
+  dbFn: () => Promise<T>,
+  fallback: () => Promise<T> | T,
+  label = "db",
+): Promise<T> {
+  try {
+    return await dbFn();
+  } catch (e) {
+    console.error(`[withDbSafe:${label}]`, e);
+    return await fallback();
+  }
+}

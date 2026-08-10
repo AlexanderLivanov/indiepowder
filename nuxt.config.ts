@@ -14,6 +14,10 @@ export default defineNuxtConfig({
   // напр. NUXT_YANDEX_CLIENT_SECRET → runtimeConfig.yandex.clientSecret
   runtimeConfig: {
     sessionSecret: "",
+    // если задан (NUXT_OAUTH_ORIGIN=https://v3.dustore.ru) — используется как
+    // origin для redirect_uri OAuth. Нужно, когда за прокси origin запроса
+    // не совпадает с адресом, зарегистрированным у провайдера.
+    oauthOrigin: "",
     yandex: { clientId: "", clientSecret: "" },
     vk: { clientId: "", clientSecret: "" },
     telegram: { botToken: "", botName: "" },

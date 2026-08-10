@@ -26,7 +26,9 @@ export default defineEventHandler(async (event) => {
   if (!code || !state || saved.state !== state)
     return sendRedirect(event, "/login?error=state");
 
-  const origin = getRequestURL(event).origin;
+  // origin ДОЛЖЕН совпадать с тем, что был на старте (redirect_uri в обмене кода)
+  const origin =
+    useRuntimeConfig(event).oauthOrigin || getRequestURL(event).origin;
 
   let profile;
   try {

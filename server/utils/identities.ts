@@ -1,7 +1,7 @@
 import { and, eq } from "drizzle-orm";
 import { hasDb, useDb } from "../db/client";
 import { userIdentities } from "../db/schema";
-import { withDbFallback } from "./dbFallback";
+import { withDbSafe } from "./dbFallback";
 
 /**
  * Привязки способов входа к аккаунту (таблица user_identities).
@@ -37,7 +37,7 @@ export const useIdentities = () => ({
     const memFn = () =>
       mem.find((r) => r.provider === provider && r.uid === uid)?.userId ?? null;
     if (!hasDb()) return memFn();
-    return withDbFallback(async () => {
+    return withDbSafe(async () => {
       const rows: any[] = await useDb()
         .select()
         .from(userIdentities)
@@ -77,7 +77,7 @@ export const useIdentities = () => ({
       }
     };
     if (!hasDb()) return memFn();
-    await withDbFallback(async () => {
+    await withDbSafe(async () => {
       const rows: any[] = await useDb()
         .select()
         .from(userIdentities)
@@ -116,7 +116,7 @@ export const useIdentities = () => ({
           createdAt,
         }));
     if (!hasDb()) return memFn();
-    return withDbFallback(async () => {
+    return withDbSafe(async () => {
       const rows: any[] = await useDb()
         .select()
         .from(userIdentities)
@@ -141,7 +141,7 @@ export const useIdentities = () => ({
       }
     };
     if (!hasDb()) return memFn();
-    await withDbFallback(async () => {
+    await withDbSafe(async () => {
       await useDb()
         .delete(userIdentities)
         .where(

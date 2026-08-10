@@ -8,7 +8,8 @@ const real = await useRealGames()
 const source = computed(() => real.value.length ? real.value : GAMES)
 const allTags = computed(() => [...new Set(source.value.flatMap((g) => g.tags))].sort())
 
-const view = ref<'picks' | 'all'>('picks')
+// основной режим — «Все игры»; подборки пока отключены
+const view = ref<'picks' | 'all'>('all')
 
 // зерно дня считаем на сервере и передаём в браузер —
 // иначе при смене суток/часового пояса сервер и клиент дадут разный порядок
@@ -54,6 +55,13 @@ const list = computed(() => {
     return sorted
 })
 
+// пагинация «всех игр»
+const page = ref(1)
+const PER = 24
+const pageCount = computed(() => Math.max(1, Math.ceil(list.value.length / PER)))
+const paged = computed(() => list.value.slice((page.value - 1) * PER, page.value * PER))
+watch([query, activeTag, sort], () => { page.value = 1 })
+
 function reset() { query.value = ''; activeTag.value = 'all' }
 
 useSeoMeta({
@@ -70,11 +78,11 @@ useSeoMeta({
                 <p class="muted">{{ $t('catalog.subtitle') }}</p>
             </div>
             <div class="switch">
-                <button :class="{ 'is-on': view === 'picks' }" @click="view = 'picks'">{{ $t('catalog.viewPicks')
-                    }}</button>
                 <button :class="{ 'is-on': view === 'all' }" @click="view = 'all'">{{ $t('catalog.viewAll', {
                     n:
                     source.length }) }}</button>
+                <button class="is-disabled" disabled title="Подборки появятся позже">{{ $t('catalog.viewPicks') }} ·
+                    скоро</button>
             </div>
         </header>
 
@@ -130,12 +138,19 @@ useSeoMeta({
             <p class="count">{{ $t('catalog.found', { n: list.length }) }}</p>
 
             <div v-if="list.length" class="grid">
-                <GameCard v-for="g in list" :key="g.id" :game="g" />
+                <GameCard v-for="g in paged" :key="g.id" :game="g" />
             </div>
             <div v-else class="empty card">
                 <p>{{ $t('catalog.empty') }}</p>
                 <button class="btn btn--sm" @click="reset">{{ $t('catalog.reset') }}</button>
             </div>
+
+            <nav v-if="pageCount > 1" class="pg">
+                <button :disabled="page === 1" @click="page--">‹</button>
+                <button v-for="p in pageCount" :key="p" :class="{ 'is-on': p === page }" @click="page = p">{{ p
+                    }}</button>
+                <button :disabled="page === pageCount" @click="page++">›</button>
+            </nav>
         </template>
     </div>
 </template>
@@ -355,6 +370,47 @@ useSeoMeta({
 .empty p {
     margin: 0 0 16px;
     color: var(--text-2);
+}
+
+.switch button.is-disabled {
+    opacity: .4;
+    cursor: not-allowed;
+}
+
+.pg {
+    display: flex;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 24px;
+}
+
+.pg button {
+    min-width: 38px;
+    height: 38px;
+    padding: 0 10px;
+    background: var(--surf);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text-2);
+    font-family: var(--f-mono);
+    font-size: 13px;
+}
+
+.pg button:hover:not(:disabled) {
+    border-color: var(--p);
+    color: #fff;
+}
+
+.pg button.is-on {
+    background: var(--p);
+    border-color: var(--p);
+    color: #fff;
+}
+
+.pg button:disabled {
+    opacity: .35;
+    cursor: not-allowed;
 }
 
 @media (min-width: 720px) {

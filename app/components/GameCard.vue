@@ -71,8 +71,8 @@ onUnmounted(() => { clearTimeout(dwellTimer); clearInterval(shotTimer) })
             @mousemove="onMove" @mouseenter="enter" @mouseleave="close">
             <!-- обложка / слайдшоу скриншотов -->
             <div class="gcard__img">
-                <div v-for="(s, i) in game.shots" :key="i" class="gcard__shot"
-                    :style="{ background: s, opacity: expanded ? (i === shot ? 1 : 0) : (i === 0 ? 1 : 0) }" />
+                <div v-for="(s, i) in game.shots" :key="i" class="gcard__shot" v-lazybg="s"
+                    :style="{ opacity: expanded ? (i === shot ? 1 : 0) : (i === 0 ? 1 : 0) }" />
                 <span class="gcard__rating">★ {{ game.rating.toFixed(1) }}</span>
                 <span v-if="game.web" class="gcard__web">web</span>
 
@@ -196,6 +196,10 @@ onUnmounted(() => { clearTimeout(dwellTimer); clearInterval(shotTimer) })
 .gcard__shot {
     position: absolute;
     inset: 0;
+    background: var(--surf-2);
+    /* плейсхолдер до ленивой загрузки */
+    background-size: cover;
+    background-position: center;
     transition: opacity .55s ease;
 }
 

@@ -9,7 +9,9 @@ export default defineEventHandler(async (event) => {
   if (!providerConfigured(provider))
     throw createError({ statusCode: 503, statusMessage: "PROVIDER_OFF" });
 
-  const origin = getRequestURL(event).origin;
+  // origin для redirect_uri: приоритет — NUXT_OAUTH_ORIGIN (для прода за прокси)
+  const origin =
+    useRuntimeConfig(event).oauthOrigin || getRequestURL(event).origin;
   const link = getQuery(event).link === "1";
   const state = randomUUID();
 

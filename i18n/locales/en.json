@@ -58,7 +58,7 @@
   "game": {
     "by": "by",
     "free": "free",
-    "plays": "plays",
+    "plays": "downloads",
     "engine": "engine",
     "rating": "rating",
     "playNow": "play now",
@@ -264,7 +264,7 @@
   },
   "error": {
     "title404": "This page fell out of the build",
-    "text404": "The link is broken or the game was unpublished. Happens — here's what you can look at instead.",
+    "text404": "Looks like this page wandered off to play. Check the address or head back home.",
     "title500": "Something broke on our side",
     "text500": "We can already see the error in the logs. Try refreshing in a minute.",
     "home": "go home",

@@ -222,6 +222,33 @@ export const gameVersions = mysqlTable(
 export type GameFileRow = typeof gameFiles.$inferSelect;
 export type GameVersionRow = typeof gameVersions.$inferSelect;
 
+/**
+ * СУЩЕСТВУЮЩАЯ прод-таблица `studios` (студии-разработчики). Только читаем,
+ * миграцией НЕ создаём. games.developer ссылается на studios.id.
+ * Объявлены только колонки, нужные витрине/консоли.
+ */
+export const studios = mysqlTable("studios", {
+  id: int("id").autoincrement().primaryKey(),
+  status: varchar("status", { length: 32 }),
+  name: text("name"),
+  tiker: varchar("tiker", { length: 32 }),
+  ownerId: int("owner_id"),
+  description: text("description"),
+  avatarLink: text("avatar_link"),
+  bannerLink: text("banner_link"),
+  vkLink: varchar("vk_link", { length: 500 }),
+  tgLink: varchar("tg_link", { length: 500 }),
+  website: varchar("website", { length: 500 }),
+  country: varchar("country", { length: 190 }),
+  city: varchar("city", { length: 190 }),
+  foundationDate: date("foundation_date", { mode: "string" }),
+  teamSize: varchar("team_size", { length: 20 }),
+  specialization: varchar("specialization", { length: 50 }),
+  createdAt: timestamp("created_at", { mode: "string" }),
+});
+
+export type StudioRow = typeof studios.$inferSelect;
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 

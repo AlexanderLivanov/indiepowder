@@ -3,6 +3,8 @@ import { useLocalePath } from '#imports'
 
 /** Панель подбора игры «Во что хотите сыграть?» */
 const localePath = useLocalePath()
+const dusty = useDusty()
+const catFailed = ref(false)
 const q = ref('')
 
 const chips = [
@@ -21,12 +23,14 @@ function ask(text?: string) {
 
 <template>
     <section class="ai">
-        <div class="ai__bot" aria-hidden="true">
-            <div class="ai__face">
-                <span class="ai__eye" /><span class="ai__eye" />
-            </div>
-            <span class="ai__gem" />
-        </div>
+        <button class="ai__bot" :aria-label="$t('tb.dusty')" :title="$t('tb.dusty')" @click="dusty.show()">
+            <img v-if="!catFailed" class="ai__cat" src="/dusty/dastyframe_idle.png" alt="Дасти"
+                @error="catFailed = true">
+            <template v-else>
+                <div class="ai__face"><span class="ai__eye" /><span class="ai__eye" /></div>
+                <span class="ai__gem" />
+            </template>
+        </button>
 
         <div class="ai__text">
             <h1>{{ $t('ai.title') }}</h1>
@@ -58,7 +62,7 @@ function ask(text?: string) {
     border-radius: var(--r-lg);
 }
 
-/* робот-талисман */
+/* талисман Дасти (клик — открыть чатбота) */
 .ai__bot {
     position: relative;
     display: grid;
@@ -66,9 +70,24 @@ function ask(text?: string) {
     width: 108px;
     height: 108px;
     justify-self: center;
+    border: none;
+    cursor: pointer;
     border-radius: 28px;
     background: radial-gradient(circle at 50% 35%, #a86ec9, #6f3f8f 70%);
     box-shadow: 0 12px 34px -8px rgba(168, 110, 201, .6);
+    transition: transform .18s;
+    overflow: hidden;
+}
+
+.ai__bot:hover {
+    transform: translateY(-2px) scale(1.03);
+}
+
+.ai__cat {
+    width: 92px;
+    height: 92px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .ai__face {

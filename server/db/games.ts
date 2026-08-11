@@ -1,6 +1,6 @@
-import { desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { hasDb, useDb } from "./client";
-import { games, type GameRow } from "./schema";
+import { games, studios, type GameRow } from "./schema";
 
 /**
  * Чтение реальных игр из таблицы `games` (база dustore).
@@ -13,6 +13,8 @@ export interface DbGame {
   name: string;
   genre: string;
   developerId: number | null;
+  developerName: string | null;
+  developerTiker: string | null;
   shortDescription: string;
   description: string;
   platforms: string[];
@@ -26,6 +28,7 @@ export interface DbGame {
   gqi: number | null;
   rating: number; // 0..5, из GQI
   ratingCount: number;
+  downloads: number; // сколько раз игра в чьей-то библиотеке (таблица library)
   price: number;
   inSubscription: boolean;
   languages: string[];
@@ -95,13 +98,20 @@ function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
-function map(r: GameRow): DbGame {
+function map(
+  r: GameRow,
+  devName?: string | null,
+  devTiker?: string | null,
+  downloads = 0,
+): DbGame {
   const gqi = r.gqi ?? null;
   return {
     id: String(r.id),
     name: r.name || "Без названия",
     genre: r.genre || "",
     developerId: r.developer ?? null,
+    developerName: devName ?? null,
+    developerTiker: devTiker ?? null,
     shortDescription: r.shortDescription || "",
     description: r.description || "",
     platforms: parseList(r.platforms),
@@ -115,6 +125,7 @@ function map(r: GameRow): DbGame {
     gqi,
     rating: gqi != null ? round1(gqi / 20) : 0,
     ratingCount: r.ratingCount ?? 0,
+    downloads,
     price: r.price ? Number(r.price) : 0,
     inSubscription: Boolean(r.inSubscription),
     languages: parseList(r.languages),
@@ -129,13 +140,19 @@ export const useGamesStore = () => ({
   async list(limit = 60): Promise<DbGame[]> {
     if (!hasDb()) return [];
     try {
-      const rows: GameRow[] = await useDb()
-        .select()
+      const rows = await useDb()
+        .select({
+          g: games,
+          sName: studios.name,
+          sTiker: studios.tiker,
+          lib: sql<number>`(select count(*) from library where library.game_id = ${games.id})`,
+        })
         .from(games)
+        .leftJoin(studios, eq(games.developer, studios.id))
         .where(eq(games.status, "published"))
         .orderBy(desc(games.createdAt))
         .limit(limit);
-      return rows.map(map);
+      return rows.map((r) => map(r.g, r.sName, r.sTiker, Number(r.lib) || 0));
     } catch (e) {
       // не роняем витрину 500-й: логируем и отдаём пусто (фронт покажет демо)
       console.error("[games.list] запрос упал:", e);
@@ -149,15 +166,48 @@ export const useGamesStore = () => ({
     const numId = Number(id);
     if (!Number.isFinite(numId)) return null;
     try {
-      const rows: GameRow[] = await useDb()
-        .select()
+      const rows = await useDb()
+        .select({
+          g: games,
+          sName: studios.name,
+          sTiker: studios.tiker,
+          lib: sql<number>`(select count(*) from library where library.game_id = ${games.id})`,
+        })
         .from(games)
+        .leftJoin(studios, eq(games.developer, studios.id))
         .where(eq(games.id, numId))
         .limit(1);
-      return rows[0] ? map(rows[0]) : null;
+      if (!rows[0]) return null;
+      return map(rows[0].g, rows[0].sName, rows[0].sTiker, Number(rows[0].lib) || 0);
     } catch (e) {
       console.error("[games.get] запрос упал:", e);
       return null;
+    }
+  },
+
+  /** игры конкретной студии (для страницы студии / консоли) */
+  async byDeveloper(devId: number, publishedOnly = true): Promise<DbGame[]> {
+    if (!hasDb() || !Number.isFinite(devId)) return [];
+    try {
+      const where = publishedOnly
+        ? and(eq(games.developer, devId), eq(games.status, "published"))
+        : eq(games.developer, devId);
+      const rows = await useDb()
+        .select({
+          g: games,
+          sName: studios.name,
+          sTiker: studios.tiker,
+          lib: sql<number>`(select count(*) from library where library.game_id = ${games.id})`,
+        })
+        .from(games)
+        .leftJoin(studios, eq(games.developer, studios.id))
+        .where(where)
+        .orderBy(desc(games.createdAt))
+        .limit(200);
+      return rows.map((r) => map(r.g, r.sName, r.sTiker, Number(r.lib) || 0));
+    } catch (e) {
+      console.error("[games.byDeveloper] запрос упал:", e);
+      return [];
     }
   },
 });

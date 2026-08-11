@@ -21,12 +21,13 @@ function toGame(r: DbGame): Game {
     const d = r.releaseDate ? Number(r.releaseDate.replace(/-/g, '')) : 0
     const shots = r.screenshots.length ? r.screenshots.map(bg) : [bg(r.cover)]
     return {
-        id: r.id, title: r.name, author: '—',
-        tags: [r.genre, ...r.platforms].filter(Boolean),
-        plays: 0, shows: 0, rating: r.rating, votes: r.ratingCount, price: r.price,
+        id: r.id, title: r.name, author: r.developerName || '—',
+        tags: [genreLabel(r.genre), ...r.platforms.map(platformLabel)].filter(Boolean),
+        plays: r.downloads, shows: 0, rating: r.rating, votes: r.ratingCount, price: r.price,
         cover: bg(r.icon || r.cover), date: d,
-        engine: r.platforms[0] || '—', size: '—', web: false,
+        engine: platformLabel(r.platforms[0]) || '—', size: '—', web: false,
         desc: r.shortDescription || r.description.slice(0, 140),
+        shortDescription: r.shortDescription,
         about: r.description || r.shortDescription, shots,
     }
 }
@@ -35,6 +36,11 @@ function toGame(r: DbGame): Game {
 const demo = findGame(String(route.params.id))
 const game = dbGame.value ? toGame(dbGame.value) : demo
 if (!game) throw createError({ statusCode: 404, statusMessage: 'Игра не найдена', fatal: true })
+
+// ссылка на студию-разработчика (если известна)
+const devLink = computed(() => dbGame.value?.developerId
+    ? localePath(`/studio/${dbGame.value.developerId}`)
+    : localePath('/crews'))
 
 const x = gameExtra(game)
 const summary = reviewSummary(x.reviews)
@@ -194,7 +200,10 @@ useSeoMeta({
             <aside class="buy">
                 <div class="buy__cover" :style="{ background: game.cover }" />
                 <h1 class="buy__title">{{ game.title }}</h1>
-                <p class="buy__desc muted">{{ game.desc }}</p>
+                <p class="buy__desc muted">
+                    <template v-if="game.shortDescription">{{ game.shortDescription }}</template>
+                    <em v-else>Разработчик не предоставил краткое описание</em>
+                </p>
 
                 <dl class="meta">
                     <div>
@@ -209,8 +218,8 @@ useSeoMeta({
                     <div>
                         <dt>{{ $t('game.developer') }}</dt>
                         <dd>
-                            <NuxtLink :to="localePath('/crews')" class="lnk">{{ game.author }}</NuxtLink>
-                            <span class="vfd" :title="$t('game.verified')">✓</span>
+                            <NuxtLink :to="devLink" class="lnk">{{ game.author }}</NuxtLink>
+                            <!-- <span v-if="dbGame?.developerId" class="vfd" :title="$t('game.verified')">✓</span> -->
                         </dd>
                     </div>
                     <div v-if="game.jam">

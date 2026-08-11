@@ -7,12 +7,6 @@ const localePath = useLocalePath()
 const real = await useRealGames()
 const source = computed(() => real.value.length ? real.value : GAMES)
 
-// четыре компактные полки сверху
-const cont = GAMES.slice(0, 3).map((g, i) => ({ ...g, progress: [81, 56, 12][i]! }))
-const forYou = hiddenGems(3)
-const fresh = freshGames(3)
-const free = webFree(3)
-
 // основная сетка
 const page = ref(1)
 const PER = 8
@@ -38,14 +32,6 @@ useSeoMeta({
 <template>
     <div class="home">
         <AiHero />
-
-        <!-- четыре полки в строку -->
-        <div class="rails">
-            <MiniRail :title="$t('sb.continue')" to="/library" :items="cont" />
-            <MiniRail :title="$t('sb.foryou')" to="/foryou" :items="forYou" />
-            <MiniRail :title="$t('sb.new')" to="/new" :items="fresh" />
-            <MiniRail :title="$t('sb.free')" to="/free" :items="free" />
-        </div>
 
         <!-- фильтры -->
         <div class="bar">

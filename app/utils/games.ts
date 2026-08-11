@@ -11,6 +11,7 @@ export interface Game {
   cover: string;
   date: number; // YYYYMMDD
   desc: string;
+  shortDescription?: string; // короткое описание (у реальных игр из БД)
   about: string;
   shots: string[];
   engine: string;

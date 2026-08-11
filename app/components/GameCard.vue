@@ -98,7 +98,7 @@ onUnmounted(() => { clearTimeout(dwellTimer); clearInterval(shotTimer) })
             <aside class="gcard__side">
                 <dl class="specs">
                     <div>
-                        <dt>{{ $t('game.engine') }}</dt>
+                        <dt>{{ $t('game.platform') }}</dt>
                         <dd>{{ game.engine }}</dd>
                     </div>
                     <div>

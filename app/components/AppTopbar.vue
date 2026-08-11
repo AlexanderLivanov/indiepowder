@@ -6,6 +6,8 @@ const switchLocalePath = useSwitchLocalePath()
 const localePath = useLocalePath()
 const { user } = useAuth()
 const { show: showNews, hasUnseen } = useWhatsNew()
+const dusty = useDusty()
+const catFailed = ref(false) // кадры котика ещё не залиты → показываем лапку
 
 /* ── поиск: сворачивается в иконку ── */
 const searchOpen = ref(false)
@@ -114,9 +116,11 @@ function onLogoLeave() { logoTilt.value = 0 }
                 <span v-if="hasUnseen" class="ib__dot" />
             </button>
 
-            <!-- лапка: ассистент Дасти -->
-            <button class="ib ib--dusty" :aria-label="$t('tb.dusty')" :title="$t('tb.dusty')">
-                <svg viewBox="0 0 24 24" fill="currentColor">
+            <!-- котик-ассистент Дасти -->
+            <button class="ib ib--dusty" :aria-label="$t('tb.dusty')" :title="$t('tb.dusty')" @click="dusty.show()">
+                <img v-if="!catFailed" class="ib__cat" src="/dusty/dastyframe_idle.png" alt="Дасти"
+                    @error="catFailed = true">
+                <svg v-else viewBox="0 0 24 24" fill="currentColor">
                     <ellipse cx="12" cy="15" rx="5" ry="4.5" />
                     <circle cx="6.5" cy="9" r="2.1" />
                     <circle cx="10" cy="6.5" r="2.1" />
@@ -332,6 +336,13 @@ function onLogoLeave() { logoTilt.value = 0 }
 .ib--dusty svg {
     width: 20px;
     height: 20px;
+}
+
+.ib__cat {
+    width: 26px;
+    height: 26px;
+    object-fit: contain;
+    image-rendering: pixelated;
 }
 
 .ib__dot {

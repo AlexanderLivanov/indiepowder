@@ -45,6 +45,7 @@ onUnmounted(() => { window.removeEventListener('mousemove', onMove); if (raf) ca
         <AppToast />
         <AppSplash />
         <WhatsNew />
+        <DustyBot />
     </div>
 </template>
 

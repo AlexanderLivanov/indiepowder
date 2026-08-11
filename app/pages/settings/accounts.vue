@@ -9,7 +9,7 @@ const { ok: toastOk, err: toastErr } = useToast()
 
 interface Identity { provider: 'yandex' | 'vk' | 'telegram'; email: string | null; createdAt: string }
 
-const pubBot = String((useRuntimeConfig().public as any).telegramBot || '').replace(/^@/, '')
+const pubBot = cleanBotName((useRuntimeConfig().public as any).telegramBot)
 
 const { data, refresh } = await useFetch<{ identities: Identity[]; hasPassword: boolean }>(
     '/api/auth/identities')

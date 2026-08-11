@@ -19,8 +19,8 @@ const providers = [
     { id: 'vk', name: 'VK ID', mark: 'VK', color: '#0077FF', ink: '#fff' },
 ] as const
 
-/* Telegram — через официальный виджет (имя бота БЕЗ @) */
-const pubBot = String((useRuntimeConfig().public as any).telegramBot || '').replace(/^@/, '')
+/* Telegram — через официальный виджет (только чистый username) */
+const pubBot = cleanBotName((useRuntimeConfig().public as any).telegramBot)
 const tgBox = ref<HTMLElement | null>(null)
 
 function goProvider(id: string) {

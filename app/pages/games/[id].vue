@@ -128,6 +128,29 @@ const releaseDate = computed(() => {
     return `${d.slice(6, 8)}.${d.slice(4, 6)}.${d.slice(0, 4)}`
 })
 
+// ── доп-файлы и версии (только у реальных игр из БД) ──
+interface GFile { id: string; kind: string; title: string; url: string; size: number | null }
+interface GVersion { id: string; version: string; channel: string; url: string; size: number | null; notes: string | null; current: boolean }
+const { data: extras } = await useFetch<{ files: GFile[]; versions: GVersion[] }>(
+    () => `/api/games/${route.params.id}/extras`, { default: () => ({ files: [], versions: [] }) })
+const files = computed(() => extras.value?.files ?? [])
+const versions = computed(() => extras.value?.versions ?? [])
+const versionsOpen = ref(false)
+
+function fmtSize(n: number | null) {
+    if (!n) return ''
+    if (n >= 1e9) return (n / 1e9).toFixed(1) + ' ГБ'
+    if (n >= 1e6) return (n / 1e6).toFixed(1) + ' МБ'
+    if (n >= 1e3) return (n / 1e3).toFixed(0) + ' КБ'
+    return n + ' Б'
+}
+const FKIND: Record<string, { ic: string; label: string }> = {
+    game: { ic: '🎮', label: 'Игра' }, soundtrack: { ic: '🎵', label: 'Саундтрек' },
+    artbook: { ic: '🎨', label: 'Артбук' }, readme: { ic: '📄', label: 'README' }, extra: { ic: '📦', label: 'Файл' },
+}
+function fkind(k: string) { return FKIND[k] || FKIND.extra! }
+function channelLabel(c: string) { return c === 'ptb' ? 'Тест (PTB)' : c === 'old' ? 'Старая' : 'Стабильная' }
+
 useSeoMeta({
     title: () => `${game!.title} — Dustore`,
     description: () => game!.desc,
@@ -210,6 +233,23 @@ useSeoMeta({
                     <button class="btn" :class="{ 'is-owned': collected }" @click="addToCollection">
                         {{ collected ? '✓ ' + $t('collect.owned') : '＋ ' + $t('collect.add') }}
                     </button>
+
+                    <!-- версии сборки (как раскрывающийся список у кнопки скачать) -->
+                    <div v-if="versions.length" class="vers">
+                        <button class="vers__toggle" @click="versionsOpen = !versionsOpen">
+                            <span>{{ versionsOpen ? '▴' : '▾' }} Версии</span><span class="muted">{{ versions.length
+                                }}</span>
+                        </button>
+                        <div v-if="versionsOpen" class="vers__list">
+                            <a v-for="v in versions" :key="v.id" :href="v.url" target="_blank" rel="noopener"
+                                class="vers__item">
+                                <span class="vers__v">{{ v.version }}</span>
+                                <span class="vers__ch" :class="'ch-' + v.channel">{{ channelLabel(v.channel) }}</span>
+                                <span v-if="v.current" class="vers__cur">текущая</span>
+                                <span v-if="v.size" class="vers__sz muted">{{ fmtSize(v.size) }}</span>
+                            </a>
+                        </div>
+                    </div>
                 </div>
             </aside>
         </div>
@@ -221,6 +261,24 @@ useSeoMeta({
                 <section class="blk">
                     <h2>{{ $t('game.about') }}</h2>
                     <p class="about__body">{{ game.about }}</p>
+                </section>
+
+                <!-- дополнительные файлы (саундтрек, артбук, README…) -->
+                <section v-if="files.length" class="blk">
+                    <h2>Дополнительные файлы</h2>
+                    <ul class="files">
+                        <li v-for="f in files" :key="f.id">
+                            <a :href="f.url" target="_blank" rel="noopener" class="file">
+                                <span class="file__ic">{{ fkind(f.kind).ic }}</span>
+                                <span class="file__main">
+                                    <span class="file__title">{{ f.title }}</span>
+                                    <span class="file__meta muted">{{ fkind(f.kind).label }}<template
+                                            v-if="f.size"> · {{ fmtSize(f.size) }}</template></span>
+                                </span>
+                                <span class="file__dl">↓</span>
+                            </a>
+                        </li>
+                    </ul>
                 </section>
 
                 <!-- отзывы -->
@@ -659,6 +717,49 @@ useSeoMeta({
 .btn.is-owned {
     border-color: #2ecc71;
     color: #2ecc71;
+}
+
+/* версии сборки */
+.vers { margin-top: 2px; }
+.vers__toggle {
+    display: flex; align-items: center; justify-content: space-between; gap: 8px; width: 100%;
+    min-height: 38px; padding: 0 14px; background: var(--bg); border: 1px solid var(--border);
+    border-radius: var(--r-sm); color: var(--text-2); font-family: var(--f-mono); font-size: 12.5px;
+}
+.vers__toggle:hover { border-color: var(--p); color: #fff; }
+.vers__list { margin-top: 6px; display: flex; flex-direction: column; gap: 4px; }
+.vers__item {
+    display: flex; align-items: center; gap: 8px; padding: 9px 12px; background: var(--bg);
+    border: 1px solid var(--border); border-radius: var(--r-sm); color: var(--text); font-size: 13px;
+}
+.vers__item:hover { border-color: var(--p); }
+.vers__v { font-family: var(--f-mono); font-weight: 600; }
+.vers__ch {
+    font-family: var(--f-mono); font-size: 10px; padding: 2px 7px; border-radius: 5px;
+    background: var(--surf-2); color: var(--text-2);
+}
+.vers__ch.ch-ptb { background: rgba(253, 203, 110, .18); color: var(--warn); }
+.vers__ch.ch-old { background: rgba(255, 255, 255, .06); color: var(--muted); }
+.vers__cur { font-family: var(--f-mono); font-size: 10px; color: var(--ok); }
+.vers__sz { margin-left: auto; font-family: var(--f-mono); font-size: 11px; }
+
+/* дополнительные файлы */
+.files { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+.file {
+    display: flex; align-items: center; gap: 12px; padding: 12px 14px; background: var(--surf);
+    border: 1px solid var(--border); border-radius: var(--r); color: inherit; transition: border-color .15s;
+}
+.file:hover { border-color: var(--p); }
+.file__ic {
+    display: grid; place-items: center; width: 38px; height: 38px; flex: none; border-radius: 10px;
+    background: var(--surf-2); font-size: 18px;
+}
+.file__main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.file__title { font-size: 14px; font-weight: 600; }
+.file__meta { font-family: var(--f-mono); font-size: 11px; margin-top: 2px; }
+.file__dl {
+    display: grid; place-items: center; width: 32px; height: 32px; flex: none; border-radius: 8px;
+    background: color-mix(in srgb, var(--p) 18%, transparent); color: var(--p); font-size: 15px;
 }
 
 /* тело */

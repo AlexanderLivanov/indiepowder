@@ -10,7 +10,6 @@ const { ok: toastOk, err: toastErr } = useToast()
 interface Identity { provider: 'yandex' | 'vk' | 'telegram'; email: string | null; createdAt: string }
 
 const pubBot = String((useRuntimeConfig().public as any).telegramBot || '').replace(/^@/, '')
-const tgBox = ref<HTMLElement | null>(null)
 
 const { data, refresh } = await useFetch<{ identities: Identity[]; hasPassword: boolean }>(
     '/api/auth/identities')
@@ -49,17 +48,19 @@ function fmtDate(s: string) {
 
 // виджет Telegram для привязки (callback свяжет с текущей сессией)
 onMounted(() => {
-    if (pubBot && tgBox.value && !linked.value.has('telegram')) {
-        const s = document.createElement('script')
-        s.src = 'https://telegram.org/js/telegram-widget.js?22'
-        s.async = true
-        s.setAttribute('data-telegram-login', pubBot)
-        s.setAttribute('data-size', 'medium')
-        s.setAttribute('data-radius', '8')
-        s.setAttribute('data-auth-url', location.origin + '/api/auth/telegram/callback')
-        s.setAttribute('data-request-access', 'write')
-        tgBox.value.appendChild(s)
-    }
+    if (!pubBot || linked.value.has('telegram')) return
+    const box = document.getElementById('tg-connect')
+    if (!box || box.dataset.ready) return
+    box.dataset.ready = '1'
+    const s = document.createElement('script')
+    s.src = 'https://telegram.org/js/telegram-widget.js?22'
+    s.async = true
+    s.setAttribute('data-telegram-login', pubBot)
+    s.setAttribute('data-size', 'medium')
+    s.setAttribute('data-radius', '8')
+    s.setAttribute('data-auth-url', location.origin + '/api/auth/telegram/callback')
+    s.setAttribute('data-request-access', 'write')
+    box.appendChild(s)
 })
 
 useSeoMeta({ title: 'Связанные аккаунты — Dustore' })
@@ -97,7 +98,7 @@ useSeoMeta({ title: 'Связанные аккаунты — Dustore' })
                 </template>
                 <template v-else>
                     <div v-if="p.id === 'telegram'">
-                        <div v-if="pubBot" ref="tgBox" class="tgbox" />
+                        <div v-if="pubBot" id="tg-connect" class="tgbox" />
                         <span v-else class="muted off">не настроен</span>
                     </div>
                     <button v-else class="btn btn--sm" @click="connect(p.id)">Подключить</button>

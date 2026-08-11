@@ -182,6 +182,46 @@ export const games = mysqlTable("games", {
 
 export type GameRow = typeof games.$inferSelect;
 
+/**
+ * НОВЫЕ v3-таблицы: доп-файлы игры (саундтрек/артбук/README) и версии сборок.
+ * Старый сайт о них не знает — создавать безопасно (см. миграцию 0002).
+ */
+export const gameFiles = mysqlTable(
+  "game_files",
+  {
+    id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
+    gameId: int("game_id").notNull(),
+    // game | soundtrack | artbook | readme | extra
+    kind: varchar("kind", { length: 16 }).notNull().default("extra"),
+    title: varchar("title", { length: 190 }).notNull(),
+    url: varchar("url", { length: 500 }).notNull(),
+    size: int("size"), // байт
+    sort: int("sort").notNull().default(0),
+    createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (t) => ({ gameIdx: index("idx_gamefiles_game").on(t.gameId) }),
+);
+
+export const gameVersions = mysqlTable(
+  "game_versions",
+  {
+    id: bigint("id", { mode: "number", unsigned: true }).autoincrement().primaryKey(),
+    gameId: int("game_id").notNull(),
+    version: varchar("version", { length: 64 }).notNull(),
+    // stable | ptb | old
+    channel: varchar("channel", { length: 16 }).notNull().default("stable"),
+    url: varchar("url", { length: 500 }).notNull(),
+    size: int("size"),
+    notes: text("notes"),
+    isCurrent: tinyint("is_current").notNull().default(0),
+    createdAt: datetime("created_at").default(sql`CURRENT_TIMESTAMP`).notNull(),
+  },
+  (t) => ({ gameIdx: index("idx_gameversions_game").on(t.gameId) }),
+);
+
+export type GameFileRow = typeof gameFiles.$inferSelect;
+export type GameVersionRow = typeof gameVersions.$inferSelect;
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 

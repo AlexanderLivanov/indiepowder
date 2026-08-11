@@ -25,10 +25,29 @@ function closeSearch() {
 function go() {
     const v = q.value.trim()
     if (!v) return
-    navigateTo(localePath(`/games?q=${encodeURIComponent(v)}`))
+    navigateTo({ path: localePath('/games'), query: { q: v } })
     searchOpen.value = false
     q.value = ''
 }
+
+const handleImageError = (e: Event) => {
+    const img = e.target as HTMLImageElement
+    img.style.display = 'none'
+    // Можно также показать fallback
+    // img.parentElement?.querySelector('.avatar-fallback')?.style.display = 'flex'
+}
+
+// Используем безопасный доступ с проверкой
+const userName = computed(() => {
+    if (!user.value) return ''
+    // Проверяем, есть ли поле name в объекте
+    return 'name' in user.value ? user.value.name : ''
+})
+
+const userAvatar = computed(() => {
+    if (!user.value) return undefined
+    return 'avatarUrl' in user.value ? user.value.avatarUrl : undefined
+})
 
 // Ctrl/Cmd+K открывает поиск
 function onKey(e: KeyboardEvent) {
@@ -138,11 +157,21 @@ function onLogoLeave() { logoTilt.value = 0 }
                 </svg>
                 <span class="ib__dot" />
             </NuxtLink>
+            
 
             <!-- профиль / вход -->
             <NuxtLink :to="localePath(user ? '/profile' : '/login')" class="tb__me">
                 <span class="tb__ava" :class="{ 'is-guest': !user }">
-                    {{ user ? user.nick.slice(0, 2).toUpperCase() : '?' }}
+                    <div
+                        style="width: 100%; height: 100%; border-radius: 50%; overflow: hidden; background: #e0e0e0; display: flex; align-items: center; justify-content: center;">
+                        <img v-if="user?.avatarUrl" :src="user.avatarUrl" alt="Аватар"
+                            style="width: 100%; height: 100%; object-fit: cover; display: block;"
+                            @error="handleImageError">
+                        <span v-else
+                            style="display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; font-size: 20px; font-weight: 500; color: #fff; background: #aa148a; text-transform: uppercase;">
+                            {{ user ? user.nick.slice(0, 2).toUpperCase() : '?' }}
+                        </span>
+                    </div>
                 </span>
             </NuxtLink>
         </div>

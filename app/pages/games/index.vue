@@ -28,10 +28,14 @@ const rails = computed(() => [
 ].filter(r => r.games.length))
 
 // ── каталог со всеми играми ──
-const query = ref('')
+const route = useRoute()
+const query = ref(String(route.query.q || '')) // поиск из шапки (?q=…)
 const activeTag = ref('all')
 const sort = ref<'pop' | 'new' | 'cheap' | 'rating'>('pop')
 const filtersOpen = ref(false)
+
+// шапка может менять ?q= без перемонтирования страницы — держим поле в синке
+watch(() => route.query.q, (q) => { query.value = String(q || '') })
 
 const sorts = [
     { key: 'pop', label: 'catalog.sortPop' },
@@ -44,7 +48,10 @@ const list = computed(() => {
     const q = query.value.trim().toLowerCase()
     const filtered = source.value.filter((g) => {
         const byT = activeTag.value === 'all' || g.tags.includes(activeTag.value)
-        const byQ = !q || g.title.toLowerCase().includes(q) || g.author.includes(q)
+        const byQ = !q
+            || g.title.toLowerCase().includes(q)
+            || g.author.toLowerCase().includes(q)
+            || g.tags.some((tag) => tag.toLowerCase().includes(q))
         return byT && byQ
     })
     const sorted = [...filtered]

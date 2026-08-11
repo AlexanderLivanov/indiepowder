@@ -15,6 +15,13 @@
       "when": 1785000000000,
       "tag": "0001_feed_posts",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1785100000000,
+      "tag": "0002_game_files_versions",
+      "breakpoints": true
     }
   ]
 }

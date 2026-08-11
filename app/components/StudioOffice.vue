@@ -23,7 +23,7 @@ function sizeKey(s: string | null): string {
     if (s === '6-10') return 'studio'
     return 'large'
 }
-const officeImg = computed(() => `/office/${sizeKey(size.value)}.png`)
+const officeImg = computed(() => `/office/${sizeKey(size.value)}.webp`)
 const imgOk = ref(false) // становится true, когда картинка реально загрузилась
 
 /* рабочие места — редактируемые (устойчивый id + координаты; хранятся локально) */

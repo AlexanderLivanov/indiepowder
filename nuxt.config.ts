@@ -95,6 +95,11 @@ export default defineNuxtConfig({
     workbox: {
       navigateFallback: "/",
       globPatterns: ["**/*.{js,css,html,png,svg,ico,woff2}"],
+      // тяжёлые фоновые медиа (картинки офиса и т.п.) НЕ precache-им — это про
+      // оболочку приложения. Крупные картинки кешируем в рантайме по факту показа.
+      globIgnores: ["**/office/**", "**/node_modules/**"],
+      // на случай отдельного тяжёлого ассета — не роняем сборку из-за precache
+      maximumFileSizeToCacheInBytes: 3 * 1024 * 1024,
       runtimeCaching: [
         {
           // шрифты Google кешируем надолго
@@ -103,6 +108,15 @@ export default defineNuxtConfig({
           options: {
             cacheName: "google-fonts",
             expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 * 365 },
+          },
+        },
+        {
+          // картинки офиса/фонов — кеш по обращению (не раздуваем precache)
+          urlPattern: /\/office\/.*\.(png|webp|jpg|jpeg)$/i,
+          handler: "CacheFirst",
+          options: {
+            cacheName: "office-bg",
+            expiration: { maxEntries: 12, maxAgeSeconds: 60 * 60 * 24 * 30 },
           },
         },
       ],

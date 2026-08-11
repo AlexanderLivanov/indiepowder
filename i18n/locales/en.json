@@ -15,6 +15,7 @@
     "ether": "chats",
     "feed": "feed",
     "apps": "mobile",
+    "fund": "crowdfunding",
     "search": "search",
     "notifications": "notifications"
   },
@@ -339,6 +340,7 @@
     "catalog": "Catalog",
     "feed": "Feed",
     "apps": "Mobile",
+    "fund": "Crowdfunding",
     "foryou": "For you",
     "new": "New",
     "popular": "Popular",

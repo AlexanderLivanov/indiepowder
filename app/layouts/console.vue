@@ -13,10 +13,19 @@ watchEffect(() => {
 })
 
 // текущая студия для шапки сайдбара
-const { data: ctx } = await useFetch<{ studio: any; studios: any[] }>(
-    '/api/console/context', { default: () => ({ studio: null, studios: [] }) })
+const { data: ctx } = await useFetch<{ studio: any; studios: any[]; selected: boolean }>(
+    '/api/console/context', { default: () => ({ studio: null, studios: [], selected: false }) })
 const studio = computed<any>(() => ctx.value?.studio ?? null)
 const studioInitials = computed(() => studio.value ? String(studio.value.name).slice(0, 2).toUpperCase() : '—')
+
+// при входе в консоль сначала выбираем студию (если есть из чего и ещё не выбрали)
+watchEffect(() => {
+    if (!import.meta.client || !user.value) return
+    const p = route.path.replace(/^\/en/, '')
+    if (p.startsWith('/console/select')) return
+    const c = ctx.value
+    if (c && c.studios?.length && !c.selected) navigateTo(localePath('/console/select'))
+})
 
 // иконки Material Icons — как в старой консоли
 useHead({

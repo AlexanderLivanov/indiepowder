@@ -9,6 +9,7 @@ const main = [
     { to: '/games', key: 'catalog', icon: 'M4 5h6v6H4zM14 5h6v6h-6zM4 15h6v6H4zM14 15h6v6h-6z' },
     { to: '/feed', key: 'feed', icon: 'M4 6h16M4 12h16M4 18h10' },
     { to: '/apps', key: 'apps', icon: 'M8 2h8a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM10.5 18.5h3' },
+    { to: '/fund', key: 'fund', icon: 'M20.8 6.6a5 5 0 0 0-7.1 0l-1.7 1.7-1.7-1.7a5 5 0 1 0-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 0 0 0-7.1z' },
     { to: '/foryou', key: 'foryou', icon: 'M12 3a9 9 0 1 0 9 9M12 8v4l3 2' },
     { to: '/new', key: 'new', icon: 'M12 2v6M12 22v-6M4.9 4.9l4.2 4.2M14.9 14.9l4.2 4.2M2 12h6M22 12h-6' },
     { to: '/popular', key: 'popular', icon: 'M12 21a9 9 0 0 0 0-18 9 9 0 0 0 0 18zM12 7v5l3 2' },

@@ -5,7 +5,8 @@ export interface Game {
   tags: string[];
   plays: number; // сколько раз запускали
   shows: number; // сколько раз ПОКАЗАЛИ в ленте — основа честной выдачи
-  rating: number;
+  rating: number; // 0..5 (для звёзд/сортировки)
+  gqi?: number; // индекс качества 0..100 (из БД)
   votes: number;
   price: number;
   cover: string;
@@ -391,6 +392,10 @@ export const GAMES: Game[] = [
 ];
 
 export const GAME_TAGS = [...new Set(GAMES.flatMap((g) => g.tags))].sort();
+
+/** индекс качества 0–100: у реальных игр — из GQI, у демо — из звёзд ×20 */
+export const gqiOf = (g: Game): number =>
+  g.gqi ?? Math.round(g.rating * 20);
 
 /* ─────────── ПОДБОРКИ ───────────
    Смысл: у каждой игры должен быть раздел, где она первая.

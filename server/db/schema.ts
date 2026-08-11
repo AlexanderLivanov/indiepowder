@@ -249,6 +249,17 @@ export const studios = mysqlTable("studios", {
 
 export type StudioRow = typeof studios.$inferSelect;
 
+/** СУЩЕСТВУЮЩАЯ прод-таблица `staff` — сотрудники студии. uid → users.id, org_id → studios.id. */
+export const staff = mysqlTable("staff", {
+  id: int("id").autoincrement().primaryKey(),
+  telegramId: bigint("telegram_id", { mode: "number" }),
+  uid: int("uid"),
+  orgId: int("org_id"),
+  role: text("role"),
+});
+
+export type StaffRow = typeof staff.$inferSelect;
+
 export type User = typeof users.$inferSelect;
 export type NewUser = typeof users.$inferInsert;
 

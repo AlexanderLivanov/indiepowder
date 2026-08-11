@@ -22,6 +22,7 @@ export function dbGameToGame(r: DbGame): Game {
         plays: r.downloads,
         shows: 0,
         rating: r.rating,
+        gqi: r.gqi ?? undefined,
         votes: r.ratingCount,
         price: r.price,
         cover: bg(r.icon || r.cover),

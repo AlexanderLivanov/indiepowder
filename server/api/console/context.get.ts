@@ -1,11 +1,6 @@
-import { getUserId } from "../../utils/session";
-import { useStudios } from "../../db/studios";
+import { resolveStudio } from "../../utils/studioContext";
 
-/** Контекст консоли: текущая студия (первая во владении) + список для переключателя. */
+/** Контекст консоли: текущая студия + список для переключателя + выбрана ли явно. */
 export default defineEventHandler(async (event) => {
-  const uid = await getUserId(event);
-  if (!uid) return { studio: null, studios: [] };
-
-  const studios = await useStudios().byOwner(uid);
-  return { studio: studios[0] || null, studios };
+  return await resolveStudio(event);
 });

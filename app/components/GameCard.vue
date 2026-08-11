@@ -73,7 +73,7 @@ onUnmounted(() => { clearTimeout(dwellTimer); clearInterval(shotTimer) })
             <div class="gcard__img">
                 <div v-for="(s, i) in game.shots" :key="i" class="gcard__shot" v-lazybg="s"
                     :style="{ opacity: expanded ? (i === shot ? 1 : 0) : (i === 0 ? 1 : 0) }" />
-                <span class="gcard__rating">★ {{ game.rating.toFixed(1) }}</span>
+                <span class="gcard__rating">◆ {{ gqiOf(game) }}</span>
                 <span v-if="game.web" class="gcard__web">web</span>
 
                 <!-- индикаторы скриншотов -->
@@ -106,8 +106,8 @@ onUnmounted(() => { clearTimeout(dwellTimer); clearInterval(shotTimer) })
                         <dd>{{ fmtPlays(game.plays) }}</dd>
                     </div>
                     <div>
-                        <dt>{{ $t('game.rating') }}</dt>
-                        <dd>★ {{ game.rating.toFixed(1) }}</dd>
+                        <dt>GQI</dt>
+                        <dd>{{ gqiOf(game) }}</dd>
                     </div>
                 </dl>
                 <div class="chips">

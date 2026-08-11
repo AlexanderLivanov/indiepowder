@@ -23,7 +23,7 @@ function toGame(r: DbGame): Game {
     return {
         id: r.id, title: r.name, author: r.developerName || '—',
         tags: [genreLabel(r.genre), ...r.platforms.map(platformLabel)].filter(Boolean),
-        plays: r.downloads, shows: 0, rating: r.rating, votes: r.ratingCount, price: r.price,
+        plays: r.downloads, shows: 0, rating: r.rating, gqi: r.gqi ?? undefined, votes: r.ratingCount, price: r.price,
         cover: bg(r.icon || r.cover), date: d,
         engine: platformLabel(r.platforms[0]) || '—', size: '—', web: false,
         desc: r.shortDescription || r.description.slice(0, 140),
@@ -206,6 +206,10 @@ useSeoMeta({
                 </p>
 
                 <dl class="meta">
+                    <div>
+                        <dt>GQI</dt>
+                        <dd><b>{{ gqiOf(game) }}</b> <span class="muted">/ 100</span></dd>
+                    </div>
                     <div>
                         <dt>{{ $t('game.reviewsShort') }}</dt>
                         <dd><span class="pos">{{ summary.label }}</span> <span class="muted">({{ summary.total

@@ -14,7 +14,7 @@ const sectionKey = computed(() => {
 })
 const sectionLabel = computed(() => {
     const map: Record<string, string> = {
-        home: 'tabs.home', games: 'nav.games', feed: 'nav.feed', apps: 'nav.apps', assets: 'nav.assets', jams: 'nav.jams',
+        home: 'tabs.home', games: 'nav.games', feed: 'nav.feed', apps: 'nav.apps', fund: 'nav.fund', assets: 'nav.assets', jams: 'nav.jams',
         crews: 'nav.crews', devlogs: 'nav.devlogs', bugs: 'nav.bugs', console: 'nav.console',
         chats: 'nav.ether', profile: 'tabs.profile', login: 'nav.login',
     }
@@ -29,6 +29,7 @@ const menu = [
     { to: '/games', label: 'nav.games', icon: 'M6 11h4M8 9v4M15 12h.01M18 10h.01M4 8h16a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V9a1 1 0 0 1 1-1z' },
     { to: '/feed', label: 'nav.feed', icon: 'M4 6h16M4 12h16M4 18h10' },
     { to: '/apps', label: 'nav.apps', icon: 'M8 2h8a1 1 0 0 1 1 1v18a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1zM10.5 18.5h3' },
+    { to: '/fund', label: 'nav.fund', icon: 'M20.8 6.6a5 5 0 0 0-7.1 0l-1.7 1.7-1.7-1.7a5 5 0 1 0-7.1 7.1l8.8 8.8 8.8-8.8a5 5 0 0 0 0-7.1z' },
     { to: '/chats', label: 'nav.ether', icon: 'M21 11.5a8.38 8.38 0 0 1-9 8.35 8.5 8.5 0 0 1-3.8-.9L3 20l1.05-3.15A8.38 8.38 0 0 1 3.2 13 8.5 8.5 0 0 1 12 4.5a8.38 8.38 0 0 1 9 7z' },
     { to: '/assets', label: 'nav.assets', icon: 'M12 2l9 5v10l-9 5-9-5V7z' },
     { to: '/jams', label: 'nav.jams', icon: 'M12 2v6M12 2a5 5 0 0 1 5 5c0 4-5 9-5 9S7 11 7 7a5 5 0 0 1 5-5zM5 21h14' },
